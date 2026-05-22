@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.*
 import com.example.ui.theme.*
+import coil.compose.AsyncImage
 
 // Shield-cut standard football card shape
 val FutCardShape = GenericShape { size, _ ->
@@ -334,11 +335,25 @@ fun FutCardView(
                         lineTo(w * 0.50f, h * 0.50f)
                         lineTo(w * 0.45f, h * 0.44f)
                         close()
-                    }
+                     }
 
                     drawPath(
                         path = collarPath,
                         color = Color(0xFF0C111C).copy(alpha = 0.55f)
+                    )
+                }
+
+                // If photo URL exists, overlay the real photo in a beautifully styled circular frame
+                if (!card.photoUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = card.photoUrl,
+                        contentDescription = "Foto de ${card.name}",
+                        modifier = Modifier
+                            .size(64.dp)
+                            .offset(y = (-4).dp)
+                            .clip(CircleShape)
+                            .border(1.5.dp, primaryColor.copy(alpha = 0.85f), CircleShape)
+                            .background(Color.Transparent)
                     )
                 }
 

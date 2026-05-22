@@ -147,6 +147,9 @@ class FutRepository(private val futDao: FutDao) {
         }
     }
 
+    suspend fun getInventoryItem(cardId: Int): UserInventory? = futDao.getInventoryItem(cardId)
+    suspend fun saveInventoryItem(item: UserInventory) = futDao.insertInventoryItem(item)
+
     // --- ESCROW TRANSACTION: CARD TRADE ---
     // Safely execute trading without duplicate exploits (Atomic transaction)
     suspend fun executeTradeOffer(offer: TradeOffer): Boolean {

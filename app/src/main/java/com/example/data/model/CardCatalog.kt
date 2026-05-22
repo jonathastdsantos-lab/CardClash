@@ -11,7 +11,8 @@ object CardCatalog {
             overall = 99,
             stats = PlayerStats(pac = 97, sho = 99, pas = 95, dri = 98, def = 60, phy = 88),
             rarity = Rarity.LENDARIA,
-            initialHexColor = "#FFD700" // Bright Gold
+            initialHexColor = "#FFD700", // Bright Gold
+            photoUrl = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80"
         ),
         PlayerCard(
             id = 2,
@@ -21,7 +22,8 @@ object CardCatalog {
             overall = 95,
             stats = PlayerStats(pac = 92, sho = 89, pas = 94, dri = 97, def = 35, phy = 79),
             rarity = Rarity.ASSINADA,
-            initialHexColor = "#DA70D6" // Orchid Purple
+            initialHexColor = "#DA70D6", // Orchid Purple
+            photoUrl = "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80"
         ),
         PlayerCard(
             id = 3,
@@ -31,7 +33,8 @@ object CardCatalog {
             overall = 92,
             stats = PlayerStats(pac = 98, sho = 88, pas = 85, dri = 94, def = 42, phy = 80),
             rarity = Rarity.ANIMADA,
-            initialHexColor = "#00FFFF" // Neon Electric Blue
+            initialHexColor = "#00FFFF", // Neon Electric Blue
+            photoUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80"
         ),
         PlayerCard(
             id = 4,
@@ -41,7 +44,8 @@ object CardCatalog {
             overall = 91,
             stats = PlayerStats(pac = 86, sho = 89, pas = 90, dri = 93, def = 38, phy = 65),
             rarity = Rarity.ASSINADA,
-            initialHexColor = "#E6E6FA" // Lavender Metallic
+            initialHexColor = "#E6E6FA", // Lavender Metallic
+            photoUrl = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80"
         ),
         PlayerCard(
             id = 5,
@@ -51,7 +55,8 @@ object CardCatalog {
             overall = 92,
             stats = PlayerStats(pac = 91, sho = 88, pas = 89, dri = 91, def = 45, phy = 78),
             rarity = Rarity.LENDARIA,
-            initialHexColor = "#FFD700"
+            initialHexColor = "#FFD700",
+            photoUrl = "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80"
         ),
 
         // === ESPECIAL (Event / Promo) ===

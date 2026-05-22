@@ -291,9 +291,12 @@ fun DashboardContent(viewModel: FutViewModel, profile: UserProfile) {
             // Main active tab selection switcher
             when (activeTab) {
                 AppTab.COLECAO -> {
+                    val liveMatches by viewModel.liveMatches.collectAsStateWithLifecycle()
                     CollectionScreen(
                         inventory = inventory,
-                        onToggleBattleDeck = { cardId -> viewModel.toggleDeckStatus(cardId) }
+                        liveMatches = liveMatches,
+                        onToggleBattleDeck = { cardId -> viewModel.toggleDeckStatus(cardId) },
+                        onUpgradeCard = { cardId, cb -> viewModel.upgradePlayerCard(cardId, cb) }
                     )
                 }
 
@@ -445,6 +448,95 @@ fun ProfileScreen(profile: UserProfile, onClearCache: () -> Unit) {
                 Text("Idade Cadastrada: ${profile.age} anos", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp)
                 Text("Método de Autenticação: ${profile.loginProvider}", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp)
                 Text("Parceria Livre: Selo de Proteção e Economia Fechada ativo.", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp)
+            }
+        }
+
+        // AI Prompt Card Generator
+        var selectedLeague by remember { mutableStateOf("Brasileirão 2026") }
+        val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
+        val context = LocalContext.current
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, NeonCyan.copy(alpha = 0.4f), shape = RoundedCornerShape(12.dp)),
+            colors = CardDefaults.cardColors(containerColor = StadiumConcrete)
+        ) {
+            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Icon(imageVector = Icons.Default.FlashOn, contentDescription = null, tint = NeonCyan, modifier = Modifier.size(16.dp))
+                    Text("Sincronização / Prompt de IA", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                }
+
+                Text(
+                    text = "Obtenha um prompt otimizado para que qualquer IA monte o elenco do ${profile.favoriteTeam} com fotos estáveis corretas e atributos realistas para o seu álbum.",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 11.sp
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    val leagues = listOf("Brasileirão 2026", "Champions 25", "Copa do Mundo")
+                    leagues.forEach { league ->
+                        val isSel = selectedLeague == league
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(if (isSel) NeonCyan else StadiumGlow, shape = RoundedCornerShape(6.dp))
+                                .border(0.5.dp, if (isSel) NeonCyan else Color.Transparent, shape = RoundedCornerShape(6.dp))
+                                .clickable { selectedLeague = league }
+                                .padding(vertical = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = league,
+                                color = if (isSel) Color.Black else Color.White.copy(alpha = 0.8f),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                val promptText = remember(selectedLeague, profile.favoriteTeam) {
+                    """
+                    Atue como um especialista em futebol e engenheiro de prompts de IA de alta performance. Gostaria que você gerasse um arquivo em formato de código de catálogo de jogadores atualizados especificamente para a liga "$selectedLeague" para o time "${profile.favoriteTeam}" (ou preencha com dados reais atualizados deste torneio se aplicável).
+
+                    Gere um array estático de dados contendo no mínimo os 11 jogadores principais e reservas relevantes respeitando as seguintes regras rígidas:
+                    1. Forneça o nome oficial correto, posição exata (ATA, MEI, VOL, DEF, GOL) baseada nas táticas modernas.
+                    2. Forneça pontuações gerais realistas (overall de 60 a 99) e estatísticas detalhadas de Rítmo (pac), Finalização (sho), Passagem (pas), Condução (dri), Defesa (def), e Físico (phy).
+                    3. Vincule URLs de fotos reais públicas do jogador oriundas de Unsplash ou de representações esportivas oficiais (URLs iniciadas em https://images.unsplash.com/ ou de CDN estável de rostos).
+                    4. Retorne o código formatado estritamente como instâncias da classe Kotlin PlayerCard em formato válido:
+                    
+                    Exemplo de Saída Esperada de Código:
+                    PlayerCard(
+                        id = 1,
+                        name = "Pelé",
+                        clubAndCountry = "Santos / Brasil",
+                        position = Position.ATA,
+                        overall = 99,
+                        stats = PlayerStats(pac = 97, sho = 99, pas = 95, dri = 98, def = 60, phy = 88),
+                        rarity = Rarity.LENDARIA,
+                        initialHexColor = "#FFD700",
+                        photoUrl = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150",
+                        clubLogoUrl = "https://images.unsplash.com/photo-1508098682722"
+                    )
+                    """.trimIndent()
+                }
+
+                Button(
+                    onClick = {
+                        clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(promptText))
+                        Toast.makeText(context, "Prompt copiado! Insira-o no Gemini para receber o catálogo atualizado.", Toast.LENGTH_SHORT).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = NeonCyan),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("Copiar Prompt de IA", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                }
             }
         }
 

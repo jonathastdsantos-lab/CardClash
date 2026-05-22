@@ -1,5 +1,7 @@
 package com.example.ui.screens
 
+import android.widget.Toast
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -7,15 +9,22 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.FlashOn
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -26,30 +35,45 @@ import com.example.ui.components.FutCardShape
 import com.example.ui.components.FutCardView
 import com.example.ui.theme.*
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun CollectionScreen(
     inventory: List<UserInventory>,
-    onToggleBattleDeck: (Int) -> Unit
+    liveMatches: List<LiveMatch> = emptyList(),
+    onToggleBattleDeck: (Int) -> Unit,
+    onUpgradeCard: (Int, (Boolean, String) -> Unit) -> Unit
 ) {
+    val context = LocalContext.current
     var rarityFilter by remember { mutableStateOf<Rarity?>(null) }
     var positionFilter by remember { mutableStateOf<Position?>(null) }
     var ownedOnly by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
 
     // Map database inventory index by Card ID
     val inventoryMap = remember(inventory) {
         inventory.associateBy { it.cardId }
     }
 
+    // Interactive simulated "LIVE" override state for immersion
+    val liveSimulatedCards = remember { mutableStateMapOf<Int, Boolean>() }
+
+    // Selected card modal details state
+    var selectedDetailCard by remember { mutableStateOf<PlayerCard?>(null) }
+
+    // Nested match details dialog state
+    var selectedMatchDetails by remember { mutableStateOf<String?>(null) }
+
     // Filter cards
-    val filteredCards = remember(rarityFilter, positionFilter, ownedOnly, inventoryMap) {
+    val filteredCards = remember(rarityFilter, positionFilter, ownedOnly, searchQuery, inventoryMap) {
         CardCatalog.cards.filter { card ->
             val matchesRarity = rarityFilter == null || card.rarity == rarityFilter
             val matchesPosition = positionFilter == null || card.position == positionFilter
             val inv = inventoryMap[card.id]
             val hasCard = inv != null && inv.quantity > 0
             val matchesOwned = !ownedOnly || hasCard
-            matchesRarity && matchesPosition && matchesOwned
+            val matchesSearch = card.name.contains(searchQuery, ignoreCase = true) || 
+                                card.clubAndCountry.contains(searchQuery, ignoreCase = true)
+            matchesRarity && matchesPosition && matchesOwned && matchesSearch
         }
     }
 
@@ -60,9 +84,6 @@ fun CollectionScreen(
         inv != null && inv.quantity > 0
     }
     val completionPercent = if (totalAvailable > 0) (uniqueOwned * 100) / totalAvailable else 0
-
-    // Selected card modal details state
-    var selectedDetailCard by remember { mutableStateOf<PlayerCard?>(null) }
 
     Column(
         modifier = Modifier
@@ -127,6 +148,26 @@ fun CollectionScreen(
                 }
             }
         }
+
+        // Search Field Card
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            placeholder = { Text("Buscar por nome da figurinha ou time...", color = Color.White.copy(alpha = 0.5f), fontSize = 13.sp) },
+            leadingIcon = { Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = NeonCyan, modifier = Modifier.size(18.dp)) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .background(StadiumConcrete, shape = RoundedCornerShape(12.dp))
+                .border(1.dp, StadiumBorder, shape = RoundedCornerShape(12.dp)),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedBorderColor = NeonCyan,
+                unfocusedBorderColor = Color.Transparent
+            ),
+            singleLine = true
+        )
 
         // Filters Container Card
         Card(
@@ -230,14 +271,43 @@ fun CollectionScreen(
                     val invItem = inventoryMap[card.id]
                     val qty = invItem?.quantity ?: 0
                     val inDeck = invItem?.inBattleDeck ?: false
+                    val upgradeLevel = invItem?.upgradeLevel ?: 0
+
+                    // Dynamic upgrade boost logic
+                    val boostedCard = remember(card, upgradeLevel) {
+                        if (upgradeLevel > 0) {
+                            val boost = upgradeLevel * 3
+                            val rawStats = card.stats
+                            val upgradedStats = PlayerStats(
+                                pac = (rawStats.pac + boost).coerceAtMost(99),
+                                sho = (rawStats.sho + boost).coerceAtMost(99),
+                                pas = (rawStats.pas + boost).coerceAtMost(99),
+                                dri = (rawStats.dri + boost).coerceAtMost(99),
+                                def = (rawStats.def + boost).coerceAtMost(99),
+                                phy = (rawStats.phy + boost).coerceAtMost(99)
+                            )
+                            val upgradedRarity = when (upgradeLevel) {
+                                1 -> if (card.rarity < Rarity.OURO) Rarity.OURO else card.rarity
+                                2 -> if (card.rarity < Rarity.LENDARIA) Rarity.LENDARIA else card.rarity
+                                else -> Rarity.ANIMADA
+                            }
+                            card.copy(
+                                overall = (card.overall + boost).coerceAtMost(99),
+                                stats = upgradedStats,
+                                rarity = upgradedRarity
+                            )
+                        } else {
+                            card
+                        }
+                    }
 
                     if (qty > 0) {
-                        // Fully unlocked glossy card
+                        // Fully unlocked boosted card
                         FutCardView(
-                            card = card,
+                            card = boostedCard,
                             quantity = qty,
                             inDeck = inDeck,
-                            onClick = { selectedDetailCard = card }
+                            onClick = { selectedDetailCard = boostedCard }
                         )
                     } else {
                         // Dark locked silhouetted card placeholder
@@ -272,31 +342,244 @@ fun CollectionScreen(
         }
     }
 
-    // Detail Pop-up drawer logic
+    // Detail Pop-up layout with dynamic stats controls and upgrade evolutions
     selectedDetailCard?.let { card ->
         val inv = inventoryMap[card.id]
         val qty = inv?.quantity ?: 0
         val inDeck = inv?.inBattleDeck ?: false
+        val upgradeLevel = inv?.upgradeLevel ?: 0
+
+        // Check if player is currently in a live match
+        val isGenuineLive = liveMatches.any { it.isLive && (card.clubAndCountry.contains(it.homeTeam, ignoreCase = true) || card.clubAndCountry.contains(it.awayTeam, ignoreCase = true)) }
+        val isLiveOverridden = liveSimulatedCards[card.id] == true
+        val isPlayerLiveActive = isGenuineLive || isLiveOverridden
 
         AlertDialog(
             onDismissRequest = { selectedDetailCard = null },
             containerColor = StadiumConcrete,
             title = {
-                Text(text = card.name, color = Color.White, fontWeight = FontWeight.Bold)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(text = card.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        Text(text = card.clubAndCountry, color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
+                    }
+                    if (isPlayerLiveActive) {
+                        Surface(
+                            color = Color.Red,
+                            shape = RoundedCornerShape(4.dp),
+                            modifier = Modifier.padding(horizontal = 4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .background(Color.White, shape = CircleShape)
+                                )
+                                Text(
+                                    text = "AO VIVO",
+                                    color = Color.White,
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                            }
+                        }
+                    }
+                }
             },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Raridade: ${card.rarity.name}", color = NeonCyan, fontWeight = FontWeight.SemiBold)
-                    Text("Time/País: ${card.clubAndCountry}", color = Color.White.copy(alpha = 0.8f))
-                    Text("Posição: ${card.position.name}", color = Color.White.copy(alpha = 0.8f))
-                    Text("Inventário pessoal: Você possui $qty unidade(s).", color = Color.White)
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Raridade: ${card.rarity.name}", color = NeonCyan, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                        Text("Posição: ${card.position.name}", color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp)
+                    }
 
+                    Text("Quantidade no Inventário: $qty", color = Color.White, fontSize = 13.sp)
+
+                    // Stats bars layout
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text("Estatísticas Atualizadas:", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+
+                        // PAC
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("RIT: ${card.stats.pac}", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp, modifier = Modifier.width(44.dp))
+                            LinearProgressIndicator(
+                                progress = { card.stats.pac / 100f },
+                                color = NeonCyan,
+                                trackColor = StadiumGlow,
+                                modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp))
+                            )
+                        }
+                        // SHO
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("FIN: ${card.stats.sho}", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp, modifier = Modifier.width(44.dp))
+                            LinearProgressIndicator(
+                                progress = { card.stats.sho / 100f },
+                                color = NeonCyan,
+                                trackColor = StadiumGlow,
+                                modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp))
+                            )
+                        }
+                        // PAS
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("PAS: ${card.stats.pas}", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp, modifier = Modifier.width(44.dp))
+                            LinearProgressIndicator(
+                                progress = { card.stats.pas / 100f },
+                                color = NeonCyan,
+                                trackColor = StadiumGlow,
+                                modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp))
+                            )
+                        }
+                        // DRI
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("CON: ${card.stats.dri}", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp, modifier = Modifier.width(44.dp))
+                            LinearProgressIndicator(
+                                progress = { card.stats.dri / 100f },
+                                color = NeonCyan,
+                                trackColor = StadiumGlow,
+                                modifier = Modifier.weight(1f).height(6.dp).clip(RoundedCornerShape(3.dp))
+                            )
+                        }
+                    }
+
+                    // EVOLUTIONS UPGRADE MECHANISM (Earned coins application)
                     if (qty > 0) {
                         Divider(color = Color.White.copy(alpha = 0.12f))
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Evolução do Card (EA FC Style)",
+                                    color = NeonEmerald,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp
+                                )
+                                Text(
+                                    text = "⭐ Nível $upgradeLevel de 3",
+                                    color = Color.White.copy(alpha = 0.8f),
+                                    fontSize = 11.sp
+                                )
+                            }
+
+                            if (upgradeLevel < 3) {
+                                Button(
+                                    onClick = {
+                                        onUpgradeCard(card.id) { isSuccess, message ->
+                                            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                                            if (isSuccess) {
+                                                selectedDetailCard = null
+                                            }
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = NeonEmerald),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text("Evoluir para Nível ${upgradeLevel + 1} (Custo: 500 🪙)", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                }
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(NeonEmerald.copy(alpha = 0.1f), shape = RoundedCornerShape(6.dp))
+                                        .padding(8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "🏆 Evolução Máxima Atingida!",
+                                        color = NeonEmerald,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // RECENT 5-MATCH FORM TIMELINE (Clickable pills)
+                    Divider(color = Color.White.copy(alpha = 0.12f))
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
-                            text = "Adicione esta figurinha ao seu 'Baralho de Batalha' para utilizá-la em disputas competitivas de Bafo!",
-                            color = Color.White.copy(alpha = 0.7f),
-                            fontSize = 11.sp
+                            text = "Histórico da Forma Recente (Últimos 5 Jogos):",
+                            color = Color.White.copy(alpha = 0.9f),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            // W W D L W
+                            val formList = listOf(
+                                Pair("V", "Vitória por 3x1 contra o Palmeiras. ${card.name} fez 1 gol de falta de longa distância aos 72' e deu assistência decisiva aos 15'!"),
+                                Pair("V", "Vitória por 2x0 sobre o Flamengo. ${card.name} controlou o meio de campo, efetuando 6 desarmes fundamentais no segundo tempo!"),
+                                Pair("E", "Empate emocionante por 2x2 com o Vasco. ${card.name} contribuiu criando 4 chances de ataque deslumbrantes!"),
+                                Pair("D", "Derrota por 1x0 contra o São Paulo. Jogo duro com marcação pesada individual em ${card.name}, que ainda finalizou na trave!"),
+                                Pair("V", "Vitória magnífica de 1x0 sobre o Santos. ${card.name} marcou o gol da vitória em cobrança cirúrgica de pênalti aos 89'!")
+                            )
+
+                            formList.forEachIndexed { index, pair ->
+                                val (outcome, details) = pair
+                                val color = when(outcome) {
+                                    "V" -> NeonEmerald
+                                    "E" -> Color.Gray
+                                    else -> Color.Red
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .background(color = color.copy(alpha = 0.2f), shape = CircleShape)
+                                        .border(1.5.dp, color, CircleShape)
+                                        .clickable { selectedMatchDetails = "Jogo ${index + 1}: $details" },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(text = outcome, color = color, fontWeight = FontWeight.Black, fontSize = 11.sp)
+                                }
+                            }
+                        }
+                        Text(
+                            text = "Toque em um círculo para visualizar os detalhes e notas da partida.",
+                            color = Color.White.copy(alpha = 0.5f),
+                            fontSize = 10.sp
+                        )
+                    }
+
+                    // LIVE SIMULATOR CONTROLLER
+                    Divider(color = Color.White.copy(alpha = 0.12f))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { liveSimulatedCards[card.id] = !isLiveOverridden }
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(imageVector = Icons.Default.FlashOn, contentDescription = null, tint = Color.Yellow, modifier = Modifier.size(16.dp))
+                            Text("Simular Jogador Ao Vivo", color = Color.White, fontSize = 12.sp)
+                        }
+                        Switch(
+                            checked = isLiveOverridden,
+                            onCheckedChange = { liveSimulatedCards[card.id] = it },
+                            colors = SwitchDefaults.colors(checkedThumbColor = Color.Red, checkedTrackColor = Color.Red.copy(alpha = 0.3f))
                         )
                     }
                 }
@@ -312,7 +595,7 @@ fun CollectionScreen(
                     ) {
                         Text(
                             text = if (inDeck) "Remover da Batalha" else "Usar na Batalha",
-                            color = Color.White,
+                            color = if (inDeck) Color.White else Color.Black,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -321,6 +604,30 @@ fun CollectionScreen(
             dismissButton = {
                 TextButton(onClick = { selectedDetailCard = null }) {
                     Text("Fechar", color = Color.White)
+                }
+            }
+        )
+    }
+
+    // Secondary match details dialog
+    selectedMatchDetails?.let { details ->
+        AlertDialog(
+            onDismissRequest = { selectedMatchDetails = null },
+            containerColor = Color(0xFF141D2D),
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Resumo da Partida do Histórico", color = NeonCyan, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+            },
+            text = {
+                Text(text = details, color = Color.White, fontSize = 13.sp, lineHeight = 18.sp)
+            },
+            confirmButton = {
+                Button(
+                    onClick = { selectedMatchDetails = null },
+                    colors = ButtonDefaults.buttonColors(containerColor = NeonCyan)
+                ) {
+                    Text("Entendido", color = Color.Black, fontWeight = FontWeight.Bold)
                 }
             }
         )

@@ -236,6 +236,33 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun upgradePlayerCard(cardId: Int, callback: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val profile = repository.userProfile.firstOrNull() ?: return@launch
+            val cost = 500
+            if (profile.coins < cost) {
+                callback(false, "Moedas insuficientes! É necessário $cost moedas para evoluir um card.")
+                return@launch
+            }
+            val currentUnit = repository.getInventoryItem(cardId) ?: return@launch
+            if (currentUnit.quantity <= 0) {
+                callback(false, "Você não possui este card!")
+                return@launch
+            }
+            val nextLevel = currentUnit.upgradeLevel + 1
+            if (nextLevel > 3) {
+                callback(false, "Este card já atingiu o nível máximo de Evolução!")
+                return@launch
+            }
+            // Deduct coins and update inventory
+            repository.addCoins(-cost)
+            val updatedItem = currentUnit.copy(upgradeLevel = nextLevel)
+            repository.saveInventoryItem(updatedItem)
+            repository.addXp(50)
+            callback(true, "Sucesso! Card evoluído para Nível $nextLevel! Atributos e bônus aumentados!")
+        }
+    }
+
     fun claimDailyReward(onSuccess: (Int) -> Unit, onError: () -> Unit) {
         viewModelScope.launch {
             val prize = repository.claimDailyStreakReward()

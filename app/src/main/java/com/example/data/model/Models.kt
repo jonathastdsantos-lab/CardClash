@@ -37,7 +37,9 @@ data class PlayerCard(
     val overall: Int,
     val stats: PlayerStats,
     val rarity: Rarity,
-    val initialHexColor: String // Custom visual tint for the card graphics
+    val initialHexColor: String, // Custom visual tint for the card graphics
+    val photoUrl: String? = null,
+    val clubLogoUrl: String? = null
 )
 
 @Entity(tableName = "user_profile")
@@ -59,7 +61,8 @@ data class UserInventory(
     @PrimaryKey val cardId: Int,
     val quantity: Int = 0,
     val isFavorite: Boolean = false,
-    val inBattleDeck: Boolean = false
+    val inBattleDeck: Boolean = false,
+    val upgradeLevel: Int = 0 // Card evolution level (0 to 3)
 )
 
 @Entity(tableName = "battle_log")
