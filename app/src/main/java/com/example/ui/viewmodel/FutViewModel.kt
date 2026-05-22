@@ -338,12 +338,16 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
         val state = _battleState.value as? BattleState.ActivePlay ?: return
         if (!state.isMySlap) return
 
+        // Set isMySlap = false immediately to reject consecutive instant calls
+        _battleState.value = state.copy(isMySlap = false)
+
         viewModelScope.launch {
             // Check if power landed in sweet spot
             val hitOptimal = state.currentPower in state.optimalTriggerZone
             val flipSuccess = hitOptimal || (Random.nextFloat() < (state.currentPower * 0.4f)) // Skill gives higher likelihood
 
             _battleState.value = state.copy(
+                isMySlap = false,
                 myCardsFlipped = flipSuccess,
                 currentTurnText = if (flipSuccess) "BOMBASTICO! Você virou o card!" else "Quase! O vento levantou mas o card não virou..."
             )
@@ -351,7 +355,8 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
             delay(2000)
 
             // Play Opponent's turn
-            _battleState.value = (_battleState.value as BattleState.ActivePlay).copy(
+            val currentStateAfterMyTurn = _battleState.value as? BattleState.ActivePlay ?: return@launch
+            _battleState.value = currentStateAfterMyTurn.copy(
                 isMySlap = false,
                 currentPower = 0f,
                 currentTurnText = "Vez de ${state.oppName}... Ele está preparando a batida!"
@@ -360,8 +365,9 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
             delay(2500)
 
             // Opponent outcome
+            val currentStateBeforeOppTurn = _battleState.value as? BattleState.ActivePlay ?: return@launch
             val oppHit = Random.nextFloat() > 0.4f // 60% standard win rate
-            _battleState.value = (_battleState.value as BattleState.ActivePlay).copy(
+            _battleState.value = currentStateBeforeOppTurn.copy(
                 oppCardsFlipped = oppHit,
                 currentTurnText = if (oppHit) "${state.oppName} conseguiu virar!" else "${state.oppName} errou a força da batida!"
             )
