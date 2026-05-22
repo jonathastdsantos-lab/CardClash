@@ -296,7 +296,10 @@ fun DashboardContent(viewModel: FutViewModel, profile: UserProfile) {
                         inventory = inventory,
                         liveMatches = liveMatches,
                         onToggleBattleDeck = { cardId -> viewModel.toggleDeckStatus(cardId) },
-                        onUpgradeCard = { cardId, cb -> viewModel.upgradePlayerCard(cardId, cb) }
+                        onUpgradeCard = { cardId, cb -> viewModel.upgradePlayerCard(cardId, cb) },
+                        onCustomizeCard = { cardId, customName, customPhotoUrl, cb -> 
+                            viewModel.customizePlayerCard(cardId, customName, customPhotoUrl, cb)
+                        }
                     )
                 }
 

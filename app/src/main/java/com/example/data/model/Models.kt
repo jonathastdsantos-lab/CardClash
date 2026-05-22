@@ -62,7 +62,9 @@ data class UserInventory(
     val quantity: Int = 0,
     val isFavorite: Boolean = false,
     val inBattleDeck: Boolean = false,
-    val upgradeLevel: Int = 0 // Card evolution level (0 to 3)
+    val upgradeLevel: Int = 0, // Card evolution level (0 to 3)
+    val customPhotoUrl: String? = null,
+    val customName: String? = null
 )
 
 @Entity(tableName = "battle_log")

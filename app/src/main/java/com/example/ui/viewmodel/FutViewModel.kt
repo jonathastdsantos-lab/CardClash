@@ -263,6 +263,22 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun customizePlayerCard(cardId: Int, customName: String?, customPhotoUrl: String?, callback: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val currentUnit = repository.getInventoryItem(cardId) ?: return@launch
+            if (currentUnit.quantity <= 0) {
+                callback(false, "Você não possui este card!")
+                return@launch
+            }
+            val updatedItem = currentUnit.copy(
+                customName = if (customName.isNullOrBlank()) null else customName,
+                customPhotoUrl = if (customPhotoUrl.isNullOrBlank()) null else customPhotoUrl
+            )
+            repository.saveInventoryItem(updatedItem)
+            callback(true, "Card personalizado com sucesso!")
+        }
+    }
+
     fun claimDailyReward(onSuccess: (Int) -> Unit, onError: () -> Unit) {
         viewModelScope.launch {
             val prize = repository.claimDailyStreakReward()

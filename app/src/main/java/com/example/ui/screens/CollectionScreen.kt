@@ -41,7 +41,8 @@ fun CollectionScreen(
     inventory: List<UserInventory>,
     liveMatches: List<LiveMatch> = emptyList(),
     onToggleBattleDeck: (Int) -> Unit,
-    onUpgradeCard: (Int, (Boolean, String) -> Unit) -> Unit
+    onUpgradeCard: (Int, (Boolean, String) -> Unit) -> Unit,
+    onCustomizeCard: (Int, String?, String?, (Boolean, String) -> Unit) -> Unit
 ) {
     val context = LocalContext.current
     var rarityFilter by remember { mutableStateOf<Rarity?>(null) }
@@ -71,7 +72,9 @@ fun CollectionScreen(
             val inv = inventoryMap[card.id]
             val hasCard = inv != null && inv.quantity > 0
             val matchesOwned = !ownedOnly || hasCard
-            val matchesSearch = card.name.contains(searchQuery, ignoreCase = true) || 
+            
+            val displayName = inv?.customName ?: card.name
+            val matchesSearch = displayName.contains(searchQuery, ignoreCase = true) || 
                                 card.clubAndCountry.contains(searchQuery, ignoreCase = true)
             matchesRarity && matchesPosition && matchesOwned && matchesSearch
         }
@@ -274,7 +277,14 @@ fun CollectionScreen(
                     val upgradeLevel = invItem?.upgradeLevel ?: 0
 
                     // Dynamic upgrade boost logic
-                    val boostedCard = remember(card, upgradeLevel) {
+                    val boostedCard = remember(card, upgradeLevel, invItem) {
+                        var c = card
+                        if (invItem?.customName != null) {
+                            c = c.copy(name = invItem.customName)
+                        }
+                        if (invItem?.customPhotoUrl != null) {
+                            c = c.copy(photoUrl = invItem.customPhotoUrl)
+                        }
                         if (upgradeLevel > 0) {
                             val boost = upgradeLevel * 3
                             val rawStats = card.stats
@@ -291,14 +301,13 @@ fun CollectionScreen(
                                 2 -> if (card.rarity < Rarity.LENDARIA) Rarity.LENDARIA else card.rarity
                                 else -> Rarity.ANIMADA
                             }
-                            card.copy(
+                            c = c.copy(
                                 overall = (card.overall + boost).coerceAtMost(99),
                                 stats = upgradedStats,
                                 rarity = upgradedRarity
                             )
-                        } else {
-                            card
                         }
+                        c
                     }
 
                     if (qty > 0) {
@@ -507,6 +516,152 @@ fun CollectionScreen(
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 12.sp
                                     )
+                                }
+                            }
+                        }
+                    }
+
+                    // PERSONALIZAÇÃO DA IDENTIDADE (OPÇÃO 1 - CUSTOM PHOTO & NAME)
+                    if (qty > 0) {
+                        Divider(color = Color.White.copy(alpha = 0.12f))
+                        var isCustomizing by remember { mutableStateOf(false) }
+                        
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { isCustomizing = !isCustomizing }
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = NeonCyan, modifier = Modifier.size(16.dp))
+                                Text("Personalizar Foto e Nome (Opção 1)", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                            Icon(
+                                imageVector = Icons.Default.ChevronRight,
+                                contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.5f),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+
+                        if (isCustomizing) {
+                            var editedName by remember { mutableStateOf(inv?.customName ?: "") }
+                            var editedPhotoUrl by remember { mutableStateOf(inv?.customPhotoUrl ?: "") }
+                            
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "Insira um link de imagem pública da internet (ou use algum de nossos presets incríveis abaixo) para mudar o visual do card!",
+                                    color = Color.White.copy(alpha = 0.6f),
+                                    fontSize = 11.sp
+                                )
+
+                                OutlinedTextField(
+                                    value = editedName,
+                                    onValueChange = { editedName = it },
+                                    label = { Text("Nome Personalizado", fontSize = 11.sp) },
+                                    placeholder = { Text("Ex: Neymar, Lionel... (ou vazio)", fontSize = 11.sp) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        focusedBorderColor = NeonCyan,
+                                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f)
+                                    ),
+                                    singleLine = true
+                                )
+
+                                OutlinedTextField(
+                                    value = editedPhotoUrl,
+                                    onValueChange = { editedPhotoUrl = it },
+                                    label = { Text("URL da Foto do Jogador", fontSize = 11.sp) },
+                                    placeholder = { Text("https://img.unsplash.com/... (ou vazio)", fontSize = 11.sp) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        focusedBorderColor = NeonCyan,
+                                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f)
+                                    ),
+                                    singleLine = true
+                                )
+
+                                // Clickable Presets Row for super high-quality sports silhouettes and generic football aesthetic portraits:
+                                Text(
+                                    text = "🌟 Modelos de Fotos de Preset:",
+                                    color = NeonCyan,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.sp
+                                )
+                                
+                                val presets = listOf(
+                                    Triple("Dynamic Red", "https://images.unsplash.com/photo-1518063319789-7217e6706b04?w=150", "#E11D48"),
+                                    Triple("Golden Boot", "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150", "#FFD700"),
+                                    Triple("Neon Blue", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150", "#00FFFF"),
+                                    Triple("Sleek Dark", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150", "#94A3B8"),
+                                    Triple("Stadium Green", "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=150", "#10B981")
+                                )
+
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    presets.forEach { (title, url, hexHex) ->
+                                        Box(
+                                            modifier = Modifier
+                                                .background(StadiumGlow, shape = RoundedCornerShape(6.dp))
+                                                .border(0.5.dp, Color.White.copy(alpha = 0.2f), shape = RoundedCornerShape(6.dp))
+                                                .clickable { 
+                                                    editedPhotoUrl = url
+                                                }
+                                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                            ) {
+                                                Box(modifier = Modifier.size(6.dp).background(Color(android.graphics.Color.parseColor(hexHex)), CircleShape))
+                                                Text(text = title, color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Button(
+                                        onClick = {
+                                            editedName = ""
+                                            editedPhotoUrl = ""
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.3f)),
+                                        modifier = Modifier.weight(1f),
+                                        shape = RoundedCornerShape(6.dp)
+                                    ) {
+                                        Text("Limpar", color = Color.White, fontSize = 11.sp)
+                                    }
+
+                                    Button(
+                                        onClick = {
+                                            onCustomizeCard(card.id, editedName, editedPhotoUrl) { success, msg ->
+                                                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                                if (success) {
+                                                    selectedDetailCard = null
+                                                }
+                                            }
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = NeonCyan),
+                                        modifier = Modifier.weight(1.5f),
+                                        shape = RoundedCornerShape(6.dp)
+                                    ) {
+                                        Text("Salvar Identidade", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                    }
                                 }
                             }
                         }
