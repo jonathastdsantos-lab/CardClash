@@ -103,7 +103,6 @@ class FutRepository(private val futDao: FutDao) {
             "OURO" -> Pair(4, listOf(Rarity.OURO, Rarity.PRATA, Rarity.BRONZE))
             "PREMIUM" -> Pair(4, listOf(Rarity.ESPECIAL, Rarity.OURO, Rarity.PRATA))
             "LENDARIO" -> Pair(5, listOf(Rarity.LENDARIA, Rarity.ASSINADA, Rarity.ANIMADA, Rarity.ESPECIAL))
-            "ICON" -> Pair(3, listOf(Rarity.ICON))
             else -> Pair(2, listOf(Rarity.BRONZE)) // GRATIS
         }
 
@@ -115,26 +114,14 @@ class FutRepository(private val futDao: FutDao) {
             val pool = if (i == 0) {
                 allCards.filter { it.rarity in minRarities }
             } else {
-                // Special premium weights for ICON pack: 40% Especial, 40% Lendaria/Assinada/Animada, 20% ICON
-                if (packType == "ICON") {
-                    val weight = Random.nextInt(100)
-                    when {
-                        weight < 40 -> allCards.filter { it.rarity == Rarity.ESPECIAL }
-                        weight < 80 -> allCards.filter { it.rarity in listOf(Rarity.LENDARIA, Rarity.ASSINADA, Rarity.ANIMADA) }
-                        else -> allCards.filter { it.rarity == Rarity.ICON }
-                    }
-                } else {
-                    // Normal draw weights for other packs, incorporating 2% chance of drawing an ICON:
-                    // 50% Bronze, 25% Prata, 12% Ouro, 7% Especial, 4% Lendária/Assinada/Animada, 2% ICON
-                    val weight = Random.nextInt(100)
-                    when {
-                        weight < 50 -> allCards.filter { it.rarity == Rarity.BRONZE }
-                        weight < 75 -> allCards.filter { it.rarity == Rarity.PRATA }
-                        weight < 87 -> allCards.filter { it.rarity == Rarity.OURO }
-                        weight < 94 -> allCards.filter { it.rarity == Rarity.ESPECIAL }
-                        weight < 98 -> allCards.filter { it.rarity in listOf(Rarity.LENDARIA, Rarity.ASSINADA, Rarity.ANIMADA) }
-                        else -> allCards.filter { it.rarity == Rarity.ICON }
-                    }
+                // Normal draw weights: 55% Bronze, 25% Prata, 12% Ouro, 5% Especial, 3% Lendária/Assinada/Animada
+                val weight = Random.nextInt(100)
+                when {
+                    weight < 55 -> allCards.filter { it.rarity == Rarity.BRONZE }
+                    weight < 80 -> allCards.filter { it.rarity == Rarity.PRATA }
+                    weight < 92 -> allCards.filter { it.rarity == Rarity.OURO }
+                    weight < 97 -> allCards.filter { it.rarity == Rarity.ESPECIAL }
+                    else -> allCards.filter { it.rarity in listOf(Rarity.LENDARIA, Rarity.ASSINADA, Rarity.ANIMADA) }
                 }
             }
 

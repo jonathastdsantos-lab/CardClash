@@ -10,7 +10,7 @@ object CardCatalog {
             position = Position.ATA,
             overall = 99,
             stats = PlayerStats(pac = 97, sho = 99, pas = 95, dri = 98, def = 60, phy = 88),
-            rarity = Rarity.ICON,
+            rarity = Rarity.LENDARIA,
             initialHexColor = "#FFD700", // Bright Gold
             photoUrl = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80"
         ),
@@ -21,7 +21,7 @@ object CardCatalog {
             position = Position.MEI,
             overall = 95,
             stats = PlayerStats(pac = 92, sho = 89, pas = 94, dri = 97, def = 35, phy = 79),
-            rarity = Rarity.ICON,
+            rarity = Rarity.ASSINADA,
             initialHexColor = "#DA70D6", // Orchid Purple
             photoUrl = "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80"
         ),
@@ -235,133 +235,6 @@ object CardCatalog {
             stats = PlayerStats(pac = 72, sho = 72, pas = 77, dri = 76, def = 40, phy = 66),
             rarity = Rarity.BRONZE,
             initialHexColor = "#CD7F32"
-        ),
-        // === NOVAS LENDAS NACIONAIS (ICONS) ===
-        PlayerCard(
-            id = 23,
-            name = "Ronaldo Fenômeno",
-            clubAndCountry = "Cruzeiro / Brasil",
-            position = Position.ATA,
-            overall = 98,
-            stats = PlayerStats(pac = 97, sho = 96, pas = 80, dri = 95, def = 35, phy = 85),
-            rarity = Rarity.ICON,
-            initialHexColor = "#E5A3FF"
-        ),
-        PlayerCard(
-            id = 24,
-            name = "Zico",
-            clubAndCountry = "Flamengo / Brasil",
-            position = Position.MEI,
-            overall = 97,
-            stats = PlayerStats(pac = 89, sho = 95, pas = 97, dri = 94, def = 50, phy = 78),
-            rarity = Rarity.ICON,
-            initialHexColor = "#E5A3FF"
-        ),
-        PlayerCard(
-            id = 25,
-            name = "Romário",
-            clubAndCountry = "Vasco / Brasil",
-            position = Position.ATA,
-            overall = 96,
-            stats = PlayerStats(pac = 94, sho = 98, pas = 82, dri = 95, def = 32, phy = 80),
-            rarity = Rarity.ICON,
-            initialHexColor = "#E5A3FF"
-        ),
-        PlayerCard(
-            id = 26,
-            name = "Garrincha",
-            clubAndCountry = "Botafogo / Brasil",
-            position = Position.ATA,
-            overall = 96,
-            stats = PlayerStats(pac = 96, sho = 86, pas = 92, dri = 99, def = 38, phy = 68),
-            rarity = Rarity.ICON,
-            initialHexColor = "#E5A3FF"
-        ),
-        // === NOVAS ESTRELAS DO BRASILEIRÃO ===
-        PlayerCard(
-            id = 27,
-            name = "Garro",
-            clubAndCountry = "Corinthians / Argentina",
-            position = Position.MEI,
-            overall = 84,
-            stats = PlayerStats(pac = 78, sho = 80, pas = 86, dri = 84, def = 55, phy = 72),
-            rarity = Rarity.OURO,
-            initialHexColor = "#D4AF37"
-        ),
-        PlayerCard(
-            id = 28,
-            name = "Arrascaeta",
-            clubAndCountry = "Flamengo / Uruguai",
-            position = Position.MEI,
-            overall = 85,
-            stats = PlayerStats(pac = 75, sho = 83, pas = 88, dri = 86, def = 45, phy = 68),
-            rarity = Rarity.ESPECIAL,
-            initialHexColor = "#FF4500"
-        ),
-        PlayerCard(
-            id = 29,
-            name = "Pedro",
-            clubAndCountry = "Flamengo / Brasil",
-            position = Position.ATA,
-            overall = 83,
-            stats = PlayerStats(pac = 74, sho = 86, pas = 72, dri = 78, def = 38, phy = 82),
-            rarity = Rarity.OURO,
-            initialHexColor = "#D4AF37"
-        ),
-        PlayerCard(
-            id = 30,
-            name = "Alan Patrick",
-            clubAndCountry = "Internacional / Brasil",
-            position = Position.MEI,
-            overall = 82,
-            stats = PlayerStats(pac = 72, sho = 80, pas = 85, dri = 83, def = 48, phy = 70),
-            rarity = Rarity.PRATA,
-            initialHexColor = "#C0C0C0"
-        ),
-        // === NOVAS ESTRELAS MUNDIAIS (WORLD STARS) ===
-        PlayerCard(
-            id = 31,
-            name = "Messi",
-            clubAndCountry = "Inter Miami / Argentina",
-            position = Position.ATA,
-            overall = 94,
-            stats = PlayerStats(pac = 85, sho = 92, pas = 94, dri = 96, def = 35, phy = 64),
-            rarity = Rarity.ESPECIAL,
-            initialHexColor = "#FF4500",
-            photoUrl = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80"
-        ),
-        PlayerCard(
-            id = 32,
-            name = "CR7",
-            clubAndCountry = "Al-Nassr / Portugal",
-            position = Position.ATA,
-            overall = 91,
-            stats = PlayerStats(pac = 84, sho = 92, pas = 78, dri = 82, def = 34, phy = 78),
-            rarity = Rarity.ESPECIAL,
-            initialHexColor = "#FF4500",
-            photoUrl = "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80"
-        ),
-        PlayerCard(
-            id = 33,
-            name = "Haaland",
-            clubAndCountry = "Man. City / Noruega",
-            position = Position.ATA,
-            overall = 91,
-            stats = PlayerStats(pac = 89, sho = 93, pas = 66, dri = 80, def = 45, phy = 88),
-            rarity = Rarity.ANIMADA,
-            initialHexColor = "#00FFFF",
-            photoUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80"
-        ),
-        PlayerCard(
-            id = 34,
-            name = "Mbappé",
-            clubAndCountry = "R. Madrid / França",
-            position = Position.ATA,
-            overall = 92,
-            stats = PlayerStats(pac = 97, sho = 90, pas = 80, dri = 92, def = 36, phy = 78),
-            rarity = Rarity.ANIMADA,
-            initialHexColor = "#00FFFF",
-            photoUrl = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80"
         )
     )
 

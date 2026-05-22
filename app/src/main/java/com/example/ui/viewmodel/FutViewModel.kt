@@ -239,6 +239,11 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
     fun upgradePlayerCard(cardId: Int, callback: (Boolean, String) -> Unit) {
         viewModelScope.launch {
             val profile = repository.userProfile.firstOrNull() ?: return@launch
+            val cost = 500
+            if (profile.coins < cost) {
+                callback(false, "Moedas insuficientes! É necessário $cost moedas para evoluir um card.")
+                return@launch
+            }
             val currentUnit = repository.getInventoryItem(cardId) ?: return@launch
             if (currentUnit.quantity <= 0) {
                 callback(false, "Você não possui este card!")
@@ -247,16 +252,6 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
             val nextLevel = currentUnit.upgradeLevel + 1
             if (nextLevel > 3) {
                 callback(false, "Este card já atingiu o nível máximo de Evolução!")
-                return@launch
-            }
-            val cost = when (nextLevel) {
-                1 -> 300
-                2 -> 600
-                3 -> 1200
-                else -> 500
-            }
-            if (profile.coins < cost) {
-                callback(false, "Moedas insuficientes! É necessário $cost moedas para evoluir um card.")
                 return@launch
             }
             // Deduct coins and update inventory
@@ -340,49 +335,11 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // --- BAFO BATTLE MODULE (Habilidade) ---
-    fun getBoostedCard(card: PlayerCard, invItem: UserInventory?): PlayerCard {
-        if (invItem == null) return card
-        var c = card
-        if (invItem.customName != null) {
-            c = c.copy(name = invItem.customName)
-        }
-        if (invItem.customPhotoUrl != null) {
-            c = c.copy(photoUrl = invItem.customPhotoUrl)
-        }
-        val upgradeLevel = invItem.upgradeLevel
-        if (upgradeLevel > 0) {
-            val boost = upgradeLevel * 5
-            val rawStats = card.stats
-            val upgradedStats = PlayerStats(
-                pac = (rawStats.pac + boost).coerceAtMost(99),
-                sho = (rawStats.sho + boost).coerceAtMost(99),
-                pas = (rawStats.pas + boost).coerceAtMost(99),
-                dri = (rawStats.dri + boost).coerceAtMost(99),
-                def = (rawStats.def + boost).coerceAtMost(99),
-                phy = (rawStats.phy + boost).coerceAtMost(99)
-            )
-            val upgradedRarity = when (upgradeLevel) {
-                1 -> if (card.rarity < Rarity.OURO) Rarity.OURO else card.rarity
-                2 -> if (card.rarity < Rarity.LENDARIA) Rarity.LENDARIA else card.rarity
-                else -> Rarity.ICON
-            }
-            c = c.copy(
-                overall = (card.overall + boost).coerceAtMost(99),
-                stats = upgradedStats,
-                rarity = upgradedRarity
-            )
-        }
-        return c
-    }
-
-    // --- BAFO BATTLE MODULE (Habilidade) ---
     fun enterBattleLobby() {
         viewModelScope.launch {
             val inv = inventory.value
-            val readyCards = inv.filter { it.quantity > 0 && it.inBattleDeck }.mapNotNull { item ->
-                CardCatalog.getCardById(item.cardId)?.let { rawCard ->
-                    getBoostedCard(rawCard, item)
-                }
+            val readyCards = inv.filter { it.quantity > 0 && it.inBattleDeck }.mapNotNull {
+                CardCatalog.getCardById(it.cardId)
             }
             _battleState.value = BattleState.ChooseWager(readyCards)
         }
@@ -401,18 +358,10 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
             val opponentName = customOpponentName ?: names.random()
             customOpponentName = null
 
-            // DYNAMIC SWEET SPOT: Higher dribbling (DRI) yields a wider zone
-            val driFactor = myCard.stats.dri / 100f
-            val halfWidth = 0.05f + driFactor * 0.10f
-            val zoneStart = (0.70f - halfWidth).coerceAtLeast(0.1f)
-            val zoneEnd = (0.70f + halfWidth).coerceAtMost(0.9f)
-            val optimalTriggerZone = zoneStart..zoneEnd
-
             _battleState.value = BattleState.ActivePlay(
                 myWager = myCard,
                 oppWager = opponentCard,
                 oppName = opponentName,
-                optimalTriggerZone = optimalTriggerZone,
                 isMySlap = true,
                 currentTurnText = "Sua vez! Encha o medidor com batidinhas de concha (Toque Rápido) e solte no alvo!"
             )
@@ -427,7 +376,7 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // User executes the slap! Based on dynamic stats physics engine
+    // User executes the slap! Based purely on hitting the target zone on power bar
     fun executeSlap() {
         val state = _battleState.value as? BattleState.ActivePlay ?: return
         if (!state.isMySlap) return
@@ -436,23 +385,9 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
         _battleState.value = state.copy(isMySlap = false)
 
         viewModelScope.launch {
-            val myCardInv = repository.getInventoryItem(state.myWager.id)
-            val upgradeLevel = myCardInv?.upgradeLevel ?: 0
-
             // Check if power landed in sweet spot
             val hitOptimal = state.currentPower in state.optimalTriggerZone
-
-            // BALANCED PHYSICS: PHY and PAC govern the slap force. Overall and UpgradeLevel yield passive bonuses.
-            val windForce = (state.myWager.stats.phy + state.myWager.stats.pac) / 200f
-            val successChance = if (hitOptimal) {
-                0.90f + windForce * 0.10f
-            } else {
-                val baseProb = state.currentPower * 0.35f * windForce
-                val overallBonus = (state.myWager.overall / 100f) * 0.15f
-                val upgradeBonus = upgradeLevel * 0.05f
-                baseProb + overallBonus + upgradeBonus
-            }
-            val flipSuccess = hitOptimal || (Random.nextFloat() < successChance)
+            val flipSuccess = hitOptimal || (Random.nextFloat() < (state.currentPower * 0.4f)) // Skill gives higher likelihood
 
             _battleState.value = state.copy(
                 isMySlap = false,
@@ -472,13 +407,9 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
 
             delay(2500)
 
-            // ADVANCED IA TURNS WITH DEFENSIVE BLOCKING: Opponent success depends on its overall minus user defense
+            // Opponent outcome
             val currentStateBeforeOppTurn = _battleState.value as? BattleState.ActivePlay ?: return@launch
-            val oppBaseChance = 0.45f + (state.oppWager.overall / 100f) * 0.25f
-            val myDefensiveBlock = (state.myWager.stats.def / 100f) * 0.20f
-            val oppFinalChance = (oppBaseChance - myDefensiveBlock).coerceIn(0.20f, 0.85f)
-            val oppHit = Random.nextFloat() < oppFinalChance
-
+            val oppHit = Random.nextFloat() > 0.4f // 60% standard win rate
             _battleState.value = currentStateBeforeOppTurn.copy(
                 oppCardsFlipped = oppHit,
                 currentTurnText = if (oppHit) "${state.oppName} conseguiu virar!" else "${state.oppName} errou a força da batida!"
@@ -493,7 +424,7 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
             } else if (!flipSuccess && oppHit) {
                 false
             } else {
-                // TIE BREAKER: based on user's final power closeness to 0.70
+                // TIE BREAKER: based on user's final power closeness to 0.75
                 Math.abs(state.currentPower - 0.7f) < 0.2f
             }
 

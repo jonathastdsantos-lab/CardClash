@@ -5,6 +5,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -215,7 +217,6 @@ fun CollectionScreen(
                             Rarity.LENDARIA -> ColorLendaria
                             Rarity.ASSINADA -> ColorAssinada
                             Rarity.ANIMADA -> ColorAnimada
-                            Rarity.ICON -> ColorIcon
                         }
                         FilterChip(
                             selected = isSel,
@@ -287,7 +288,7 @@ fun CollectionScreen(
                             c = c.copy(photoUrl = invItem.customPhotoUrl)
                         }
                         if (upgradeLevel > 0) {
-                            val boost = upgradeLevel * 5
+                            val boost = upgradeLevel * 3
                             val rawStats = card.stats
                             val upgradedStats = PlayerStats(
                                 pac = (rawStats.pac + boost).coerceAtMost(99),
@@ -300,7 +301,7 @@ fun CollectionScreen(
                             val upgradedRarity = when (upgradeLevel) {
                                 1 -> if (card.rarity < Rarity.OURO) Rarity.OURO else card.rarity
                                 2 -> if (card.rarity < Rarity.LENDARIA) Rarity.LENDARIA else card.rarity
-                                else -> Rarity.ICON
+                                else -> Rarity.ANIMADA
                             }
                             c = c.copy(
                                 overall = (card.overall + boost).coerceAtMost(99),
@@ -405,9 +406,12 @@ fun CollectionScreen(
                 }
             },
             text = {
+                val scrollState = rememberScrollState()
                 Column(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(scrollState)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -488,13 +492,6 @@ fun CollectionScreen(
                             }
 
                             if (upgradeLevel < 3) {
-                                val nextLevel = upgradeLevel + 1
-                                val cost = when (nextLevel) {
-                                    1 -> 300
-                                    2 -> 600
-                                    3 -> 1200
-                                    else -> 500
-                                }
                                 Button(
                                     onClick = {
                                         onUpgradeCard(card.id) { isSuccess, message ->
@@ -508,7 +505,7 @@ fun CollectionScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
-                                    Text("Evoluir para Nível $nextLevel (Custo: $cost 🪙)", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    Text("Evoluir para Nível ${upgradeLevel + 1} (Custo: 500 🪙)", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                 }
                             } else {
                                 Box(
@@ -607,18 +604,18 @@ fun CollectionScreen(
                                 )
                                 
                                 val presets = listOf(
-                                    Triple("Dynamic Red", "https://images.unsplash.com/photo-1518063319789-7217e6706b04?w=150", "#E11D48"),
-                                    Triple("Golden Boot", "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150", "#FFD700"),
-                                    Triple("Neon Blue", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150", "#00FFFF"),
-                                    Triple("Sleek Dark", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150", "#94A3B8"),
-                                    Triple("Stadium Green", "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=150", "#10B981")
+                                    Triple("Dynamic Red", "https://images.unsplash.com/photo-1518063319789-7217e6706b04?w=150", Color(0xFFE11D48)),
+                                    Triple("Golden Boot", "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150", Color(0xFFFFD700)),
+                                    Triple("Neon Blue", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150", Color(0xFF00FFFF)),
+                                    Triple("Sleek Dark", "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150", Color(0xFF94A3B8)),
+                                    Triple("Stadium Green", "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=150", Color(0xFF10B981))
                                 )
 
                                 FlowRow(
                                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    presets.forEach { (title, url, hexHex) ->
+                                    presets.forEach { (title, url, colorValue) ->
                                         Box(
                                             modifier = Modifier
                                                 .background(StadiumGlow, shape = RoundedCornerShape(6.dp))
@@ -632,7 +629,7 @@ fun CollectionScreen(
                                                 verticalAlignment = Alignment.CenterVertically,
                                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                                             ) {
-                                                Box(modifier = Modifier.size(6.dp).background(Color(android.graphics.Color.parseColor(hexHex)), CircleShape))
+                                                Box(modifier = Modifier.size(6.dp).background(colorValue, CircleShape))
                                                 Text(text = title, color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                                             }
                                         }
