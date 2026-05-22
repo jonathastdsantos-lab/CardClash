@@ -96,13 +96,14 @@ fun FutCardView(
             val animatedColor2 = Color.hsl((animatedProgress + 180) % 360f, 0.8f, 0.2f)
             Pair(animatedColor1, animatedColor2)
         }
+        Rarity.ICON -> Pair(ColorIcon, Color(0xFF240A34))
     }
 
     val (primaryColor, darkAccent) = cardColors
 
     // Holographic shine brush helper for animations
     val holographicBrush = remember(animatedProgress, card.rarity) {
-        if (card.rarity in listOf(Rarity.LENDARIA, Rarity.ASSINADA, Rarity.ANIMADA)) {
+        if (card.rarity in listOf(Rarity.LENDARIA, Rarity.ASSINADA, Rarity.ANIMADA, Rarity.ICON)) {
             Brush.linearGradient(
                 colors = listOf(
                     primaryColor.copy(alpha = 0.8f),
@@ -156,6 +157,7 @@ fun FutCardView(
                     Rarity.LENDARIA -> Color(0xFF321F54)
                     Rarity.ASSINADA -> Color(0xFF282F24)
                     Rarity.ANIMADA -> Color(0xFF1A331E)
+                    Rarity.ICON -> Color(0xFF3D0C5A)
                 }
 
                 drawRect(

@@ -10,7 +10,8 @@ enum class Rarity {
     ESPECIAL,
     LENDARIA,
     ASSINADA,
-    ANIMADA
+    ANIMADA,
+    ICON
 }
 
 enum class Position {

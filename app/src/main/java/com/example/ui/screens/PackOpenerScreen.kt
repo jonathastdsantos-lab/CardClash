@@ -172,6 +172,16 @@ fun PackOpenerScreen(
                     userCoins = coins
                 )
 
+                PackStoreItem(
+                    name = "Pacote Ícone Supremo",
+                    description = "Contém 3 cards lendários premium. Garante pelo menos 1 carta ICON histórica de valor máximo!",
+                    cost = 5000,
+                    tintColor = ColorIcon,
+                    onBuy = { onBuyPack("ICON", 5000) },
+                    onInfo = { selectedPackTypeForInfo = "ICON" },
+                    userCoins = coins
+                )
+
                 Spacer(modifier = Modifier.height(48.dp))
             }
         } else {
@@ -312,6 +322,7 @@ fun PackOpenerScreen(
             "OURO" -> "Garantia: 1 Card Ouro. Taxas: 60% Ouro, 30% Prata, 8% Especial, 2% Lendária."
             "PREMIUM" -> "Garantia: 1 Especial/Ouro. Taxas: 50% Especial, 35% Ouro, 10% Prata, 5% Lendária/Assinada."
             "LENDARIO" -> "Apenas Cards de Alto Nível: 100% de probabilidade em Lendária, Assinada, Animada ou Especial."
+            "ICON" -> "Garantia: 1 Card ICON Supremo. Taxas nos outros slots: 40% Especial, 40% Lendária/Assinada/Animada, 20% ICON."
             else -> ""
         }
         AlertDialog(

@@ -21,4 +21,5 @@ val ColorEspecial = Color(0xFF7CB65D)
 val ColorLendaria = Color(0xFFFFD700)
 val ColorAssinada = Color(0xFFD0E8BB)
 val ColorAnimada = Color(0xFF9CD67D)
+val ColorIcon = Color(0xFFE5A3FF)
 

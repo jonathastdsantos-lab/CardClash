@@ -215,6 +215,7 @@ fun CollectionScreen(
                             Rarity.LENDARIA -> ColorLendaria
                             Rarity.ASSINADA -> ColorAssinada
                             Rarity.ANIMADA -> ColorAnimada
+                            Rarity.ICON -> ColorIcon
                         }
                         FilterChip(
                             selected = isSel,
@@ -286,7 +287,7 @@ fun CollectionScreen(
                             c = c.copy(photoUrl = invItem.customPhotoUrl)
                         }
                         if (upgradeLevel > 0) {
-                            val boost = upgradeLevel * 3
+                            val boost = upgradeLevel * 5
                             val rawStats = card.stats
                             val upgradedStats = PlayerStats(
                                 pac = (rawStats.pac + boost).coerceAtMost(99),
@@ -299,7 +300,7 @@ fun CollectionScreen(
                             val upgradedRarity = when (upgradeLevel) {
                                 1 -> if (card.rarity < Rarity.OURO) Rarity.OURO else card.rarity
                                 2 -> if (card.rarity < Rarity.LENDARIA) Rarity.LENDARIA else card.rarity
-                                else -> Rarity.ANIMADA
+                                else -> Rarity.ICON
                             }
                             c = c.copy(
                                 overall = (card.overall + boost).coerceAtMost(99),
@@ -487,6 +488,13 @@ fun CollectionScreen(
                             }
 
                             if (upgradeLevel < 3) {
+                                val nextLevel = upgradeLevel + 1
+                                val cost = when (nextLevel) {
+                                    1 -> 300
+                                    2 -> 600
+                                    3 -> 1200
+                                    else -> 500
+                                }
                                 Button(
                                     onClick = {
                                         onUpgradeCard(card.id) { isSuccess, message ->
@@ -500,7 +508,7 @@ fun CollectionScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
-                                    Text("Evoluir para Nível ${upgradeLevel + 1} (Custo: 500 🪙)", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    Text("Evoluir para Nível $nextLevel (Custo: $cost 🪙)", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                 }
                             } else {
                                 Box(
