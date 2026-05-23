@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,10 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Paid
-import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,6 +29,8 @@ import com.example.data.model.PlayerCard
 import com.example.ui.components.FutCardShape
 import com.example.ui.components.FutCardView
 import com.example.ui.theme.*
+import com.example.ui.viewmodel.CoinPack
+import com.example.ui.viewmodel.BillingSimulationState
 
 @Composable
 fun PackOpenerScreen(
@@ -38,7 +38,18 @@ fun PackOpenerScreen(
     isOpeningAnim: Boolean,
     openedCards: List<PlayerCard>?,
     onBuyPack: (String, Int) -> Unit,
-    onDismissPack: () -> Unit
+    onDismissPack: () -> Unit,
+    availableCoinPacks: List<CoinPack> = emptyList(),
+    billingState: BillingSimulationState? = null,
+    hasElitePass: Boolean = false,
+    isSimulatingAd: Boolean = false,
+    adCountdown: Int = 0,
+    onStartBilling: (CoinPack) -> Unit = {},
+    onStartElitePassBilling: () -> Unit = {},
+    onCancelBilling: () -> Unit = {},
+    onSelectPaymentAndProcess: (CoinPack, String) -> Unit = { _, _ -> },
+    onProcessElitePassPurchase: (String) -> Unit = {},
+    onPlayAd: () -> Unit = {}
 ) {
     var selectedPackTypeForInfo by remember { mutableStateOf<String?>(null) }
     val scrollState = rememberScrollState()
@@ -171,6 +182,47 @@ fun PackOpenerScreen(
                     onInfo = { selectedPackTypeForInfo = "LENDARIO" },
                     userCoins = coins
                 )
+
+                HorizontalDivider(color = Color.White.copy(alpha = 0.12f), thickness = 1.dp, modifier = Modifier.padding(vertical = 8.dp))
+
+                // Real Money Coin Packs Store
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.Paid, contentDescription = null, tint = BrightGold, modifier = Modifier.size(24.dp))
+                    Text(
+                        text = "Loja de Moedas & Vantagens",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+                
+                Text(
+                    text = "Adquira moedas com a simulação real de faturamento in-app (Google Play Billing), ganhe moedas grátis assistindo a anúncios premiados ou ative o Passe de Elite Temporada 1!",
+                    color = Color.White.copy(alpha = 0.7f),
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp
+                )
+
+                ElitePassStoreItem(
+                    hasElitePass = hasElitePass,
+                    onPurchase = onStartElitePassBilling
+                )
+
+                RewardedAdStoreItem(
+                    isSimulating = isSimulatingAd,
+                    adCountdown = adCountdown,
+                    onPlay = onPlayAd
+                )
+
+                availableCoinPacks.forEach { pack ->
+                    CoinPackStoreItem(
+                        pack = pack,
+                        onPurchase = { onStartBilling(pack) }
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(48.dp))
             }
@@ -327,6 +379,243 @@ fun PackOpenerScreen(
             }
         )
     }
+
+    // --- SIMULATED GOOGLE PLAY BILLING OVERLAY DIALOGS ---
+    billingState?.let { state ->
+        AlertDialog(
+            onDismissRequest = { if (state !is BillingSimulationState.Processing) onCancelBilling() },
+            containerColor = StadiumConcrete,
+            modifier = Modifier.border(1.dp, NeonCyan.copy(alpha = 0.3f), shape = RoundedCornerShape(16.dp)),
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.Wallet, contentDescription = null, tint = BrightGold)
+                    Text(
+                        text = "Google Play Billing",
+                        color = Color.White,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 18.sp
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    when (state) {
+                        is BillingSimulationState.ChoosePaymentMethod -> {
+                            val pack = state.pack
+                            Text(
+                                text = "Você está comprando: ${pack.name}",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = "Valor: ${pack.priceBrl}",
+                                color = BrightGold,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 18.sp,
+                                textAlign = TextAlign.Center
+                            )
+                            HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+                            Text(
+                                text = "Selecione o método de pagamento simulado:",
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 12.sp,
+                                textAlign = TextAlign.Center
+                            )
+                            
+                            val methods = listOf(
+                                "Pix (Chave Copa)" to Icons.Default.QrCode,
+                                "Cartão de Crédito (Visa *8829)" to Icons.Default.CreditCard,
+                                "Saldo Google Play" to Icons.Default.Paid,
+                                "Mercado Pago" to Icons.Default.AccountBalance
+                            )
+                            
+                            methods.forEach { (name, icon) ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(StadiumObsidian, shape = RoundedCornerShape(8.dp))
+                                        .border(1.dp, StadiumBorder, shape = RoundedCornerShape(8.dp))
+                                        .clickable { onSelectPaymentAndProcess(pack, name) }
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Icon(imageVector = icon, contentDescription = null, tint = NeonCyan, modifier = Modifier.size(18.dp))
+                                    Text(text = name, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 13.sp)
+                                }
+                            }
+                        }
+                        
+                        is BillingSimulationState.BuyingElitePass -> {
+                            Text(
+                                text = "Você está ativando o Passe de Elite Temporada 1!",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = "Valor único: ${state.priceBrl}",
+                                color = ColorEspecial,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 18.sp,
+                                textAlign = TextAlign.Center
+                            )
+                            HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
+                            
+                            val methods = listOf(
+                                "Pix (Chave Copa)" to Icons.Default.QrCode,
+                                "Cartão de Crédito (Visa *8829)" to Icons.Default.CreditCard,
+                                "Saldo Google Play" to Icons.Default.Paid,
+                                "Mercado Pago" to Icons.Default.AccountBalance
+                            )
+                            
+                            methods.forEach { (name, icon) ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(StadiumObsidian, shape = RoundedCornerShape(8.dp))
+                                        .border(1.dp, StadiumBorder, shape = RoundedCornerShape(8.dp))
+                                        .clickable { onProcessElitePassPurchase(name) }
+                                        .padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Icon(imageVector = icon, contentDescription = null, tint = NeonCyan, modifier = Modifier.size(18.dp))
+                                    Text(text = name, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 13.sp)
+                                }
+                            }
+                        }
+                        
+                        is BillingSimulationState.Processing -> {
+                            CircularProgressIndicator(color = NeonCyan, modifier = Modifier.size(48.dp))
+                            Text(
+                                text = "Processando transação com a carteira ${state.paymentMethod}...",
+                                color = Color.White.copy(alpha = 0.8f),
+                                fontSize = 13.sp,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        
+                        is BillingSimulationState.Success -> {
+                            Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null, tint = NeonEmerald, modifier = Modifier.size(54.dp))
+                            Text(
+                                text = "Compra Efetuada com Sucesso!",
+                                color = NeonEmerald,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 16.sp
+                            )
+                            Text(
+                                text = "Creditado: +${state.coinsGranted} Moedas",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                            Text(
+                                text = "Google Play confirmou o consumo do produto consumível com êxito.",
+                                color = Color.White.copy(alpha = 0.6f),
+                                fontSize = 11.sp,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        
+                        is BillingSimulationState.ElitePassSuccess -> {
+                            Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = ColorEspecial, modifier = Modifier.size(54.dp))
+                            Text(
+                                text = "Passe de Elite Ativado!",
+                                color = ColorEspecial,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 16.sp
+                            )
+                            Text(
+                                text = "Bônus Creditado: +${state.bonusCoins} Moedas",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                            Text(
+                                text = "Agora você possui o dobro de XP nas partidas e o selo ativo!",
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 11.sp,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                if (state is BillingSimulationState.Success || state is BillingSimulationState.ElitePassSuccess) {
+                    TextButton(onClick = onCancelBilling) {
+                        Text("Fechar", color = NeonCyan)
+                    }
+                } else if (state !is BillingSimulationState.Processing) {
+                    TextButton(onClick = onCancelBilling) {
+                        Text("Cancelar", color = Color.White.copy(alpha = 0.6f))
+                    }
+                }
+            }
+        )
+    }
+
+    // --- REWARDED ADS SIMULATED DIALOG ---
+    if (isSimulatingAd) {
+        AlertDialog(
+            onDismissRequest = {}, // Cannot dismiss during short ad simulation
+            containerColor = Color.Black.copy(alpha = 0.95f),
+            modifier = Modifier.fillMaxWidth().border(1.dp, NeonEmerald, shape = RoundedCornerShape(16.dp)),
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, tint = NeonEmerald)
+                    Text("Anúncio Premiado em Exibição", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp)
+                            .background(StadiumConcrete, shape = RoundedCornerShape(12.dp))
+                            .border(1.dp, Color.White.copy(alpha = 0.1f), shape = RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            CircularProgressIndicator(color = NeonEmerald, modifier = Modifier.size(36.dp))
+                            Text(
+                                text = "${adCountdown}s restantes",
+                                color = Color.White,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 20.sp
+                            )
+                        }
+                    }
+                    Text(
+                        text = "Assista até o fim para receber as moedas gratuitas. Simulação patrocinada pela Google AdMob.",
+                        color = Color.White.copy(alpha = 0.6f),
+                        fontSize = 11.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            },
+            confirmButton = {} // No dismiss button for realism
+        )
+    }
 }
 
 @Composable
@@ -395,6 +684,234 @@ fun PackStoreItem(
                         fontWeight = FontWeight.Bold
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun CoinPackStoreItem(
+    pack: CoinPack,
+    onPurchase: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, NeonCyan.copy(alpha = 0.25f), shape = RoundedCornerShape(12.dp)),
+        colors = CardDefaults.cardColors(containerColor = StadiumConcrete)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Icon(imageVector = Icons.Default.Paid, contentDescription = null, tint = BrightGold, modifier = Modifier.size(20.dp))
+                    Text(
+                        text = pack.name,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
+                    )
+                    pack.bonusLabel?.let { label ->
+                        Box(
+                            modifier = Modifier
+                                .background(NeonEmerald, shape = RoundedCornerShape(4.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = label,
+                                color = Color.Black,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Black
+                            )
+                        }
+                    }
+                }
+                Text(
+                    text = "Garante +${pack.coinsAmount} moedas instantaneamente",
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 11.sp
+                )
+            }
+            
+            Button(
+                onClick = onPurchase,
+                colors = ButtonDefaults.buttonColors(containerColor = BrightGold),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(
+                    text = pack.priceBrl,
+                    color = Color.Black,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Black
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ElitePassStoreItem(
+    hasElitePass: Boolean,
+    onPurchase: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                border = BorderStroke(
+                    1.dp,
+                    if (hasElitePass) NeonCyan else ColorEspecial
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = if (hasElitePass) StadiumConcrete else StadiumGlow
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    brush = Brush.horizontalGradient(
+                        colors = if (hasElitePass) {
+                            listOf(StadiumConcrete, StadiumConcrete)
+                        } else {
+                            listOf(ColorEspecial.copy(alpha = 0.15f), NeonEmerald.copy(alpha = 0.05f))
+                        }
+                    )
+                )
+                .padding(14.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            tint = if (hasElitePass) NeonCyan else ColorEspecial,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Text(
+                            text = "Passe de Elite Temporada 1",
+                            color = Color.White,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 15.sp
+                        )
+                    }
+                    Text(
+                        text = if (hasElitePass) {
+                            "Status: ATIVO! 👑 Ganhe o dobro de XP nas partidas e desfrute de privilégios premium."
+                        } else {
+                            "Desbloqueie: +5.000 moedas bônus imediato, o dobro de XP no Bafo e selo premium dourado!"
+                        },
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 11.sp,
+                        lineHeight = 15.sp
+                    )
+                }
+                
+                Spacer(modifier = Modifier.width(8.dp))
+                
+                if (hasElitePass) {
+                    Box(
+                        modifier = Modifier
+                            .background(NeonCyan.copy(alpha = 0.12f), shape = RoundedCornerShape(6.dp))
+                            .border(1.dp, NeonCyan, shape = RoundedCornerShape(6.dp))
+                            .padding(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "ATIVADO",
+                            color = NeonCyan,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Black
+                        )
+                    }
+                } else {
+                    Button(
+                        onClick = onPurchase,
+                        colors = ButtonDefaults.buttonColors(containerColor = ColorEspecial),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = "R$ 19,90",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Black
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun RewardedAdStoreItem(
+    isSimulating: Boolean,
+    adCountdown: Int,
+    onPlay: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(
+                width = 1.dp,
+                color = if (isSimulating) NeonEmerald.copy(alpha = 0.5f) else Color.White.copy(alpha = 0.1f),
+                shape = RoundedCornerShape(12.dp)
+            ),
+        colors = CardDefaults.cardColors(containerColor = StadiumConcrete)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, tint = NeonEmerald, modifier = Modifier.size(20.dp))
+                    Text(
+                        text = "Vídeo Premiado (Rewarded Ad)",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
+                    )
+                }
+                Text(
+                    text = "Ganhe +150 moedas gratuitamente ao assistir a um anúncio de 5 segundos.",
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 11.sp
+                )
+            }
+            
+            Button(
+                onClick = onPlay,
+                enabled = !isSimulating,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = NeonEmerald,
+                    disabledContainerColor = Color.Gray.copy(alpha = 0.2f)
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(
+                    text = if (isSimulating) "Assistindo (${adCountdown}s)" else "Assistir",
+                    color = Color.Black,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }

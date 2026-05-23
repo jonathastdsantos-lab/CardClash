@@ -3,6 +3,7 @@ package com.example
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -89,6 +90,11 @@ fun DashboardContent(viewModel: FutViewModel, profile: UserProfile) {
     val isPackOpening by viewModel.isPackOpeningAnimActive.collectAsStateWithLifecycle()
     val openedCards by viewModel.openingPackResult.collectAsStateWithLifecycle()
 
+    val billingState by viewModel.billingState.collectAsStateWithLifecycle()
+    val hasElitePass by viewModel.hasElitePass.collectAsStateWithLifecycle()
+    val isSimulatingAd by viewModel.isSimulatingAd.collectAsStateWithLifecycle()
+    val adCountdown by viewModel.adCountdown.collectAsStateWithLifecycle()
+
     // Host to trigger visual goal snackbar alerts
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -99,6 +105,13 @@ fun DashboardContent(viewModel: FutViewModel, profile: UserProfile) {
                 message = "$title\n$text",
                 duration = SnackbarDuration.Short
             )
+        }
+    }
+
+    // Intercept Back presses inside sub-tabs to switch back to Album (COLECAO) before exiting the app
+    if (activeTab != AppTab.COLECAO) {
+        BackHandler {
+            viewModel.selectTab(AppTab.COLECAO)
         }
     }
 
@@ -309,7 +322,18 @@ fun DashboardContent(viewModel: FutViewModel, profile: UserProfile) {
                         isOpeningAnim = isPackOpening,
                         openedCards = openedCards,
                         onBuyPack = { type, price -> viewModel.buyPack(type, price) },
-                        onDismissPack = { viewModel.dismissPackOpening() }
+                        onDismissPack = { viewModel.dismissPackOpening() },
+                        availableCoinPacks = viewModel.availableCoinPacks,
+                        billingState = billingState,
+                        hasElitePass = hasElitePass,
+                        isSimulatingAd = isSimulatingAd,
+                        adCountdown = adCountdown,
+                        onStartBilling = { pack -> viewModel.startBillingSimulation(pack) },
+                        onStartElitePassBilling = { viewModel.startElitePassBillingSimulation() },
+                        onCancelBilling = { viewModel.cancelBillingSimulation() },
+                        onSelectPaymentAndProcess = { pack, method -> viewModel.selectPaymentAndProcess(pack, method) },
+                        onProcessElitePassPurchase = { method -> viewModel.processElitePassPurchase(method) },
+                        onPlayAd = { viewModel.playSimulatedAd() }
                     )
                 }
 

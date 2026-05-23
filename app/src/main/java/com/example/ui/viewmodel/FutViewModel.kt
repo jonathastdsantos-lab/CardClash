@@ -89,11 +89,47 @@ data class FriendInvite(
     val timestamp: Long = System.currentTimeMillis()
 )
 
+data class CoinPack(
+    val id: String,          // SKU no Google Play Console (ex: "coin_pack_small")
+    val name: String,
+    val coinsAmount: Int,
+    val priceBrl: String,
+    val bonusLabel: String? = null
+)
+
+sealed class BillingSimulationState {
+    data class ChoosePaymentMethod(val pack: CoinPack) : BillingSimulationState()
+    data class Processing(val pack: CoinPack, val paymentMethod: String) : BillingSimulationState()
+    data class Success(val pack: CoinPack, val coinsGranted: Int) : BillingSimulationState()
+    data class BuyingElitePass(val priceBrl: String) : BillingSimulationState()
+    data class ElitePassSuccess(val bonusCoins: Int) : BillingSimulationState()
+}
+
 class FutViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: FutRepository
     private var liveSimJob: Job? = null
     private var quizTimerJob: Job? = null
+
+    // --- MONETIZATION STATE FLOWS ---
+    private val _hasElitePass = MutableStateFlow(false)
+    val hasElitePass: StateFlow<Boolean> = _hasElitePass.asStateFlow()
+
+    private val _isSimulatingAd = MutableStateFlow(false)
+    val isSimulatingAd: StateFlow<Boolean> = _isSimulatingAd.asStateFlow()
+
+    private val _adCountdown = MutableStateFlow(0)
+    val adCountdown: StateFlow<Int> = _adCountdown.asStateFlow()
+
+    private val _billingState = MutableStateFlow<BillingSimulationState?>(null)
+    val billingState: StateFlow<BillingSimulationState?> = _billingState.asStateFlow()
+
+    val availableCoinPacks = listOf(
+        CoinPack("coin_pack_small", "Pilha de Moedas", 2500, "R$ 4,90"),
+        CoinPack("coin_pack_medium", "Saco de Moedas", 10000, "R$ 14,90", "+10% BÔNUS"),
+        CoinPack("coin_pack_large", "Baú de Moedas", 35000, "R$ 39,90", "+25% BÔNUS"),
+        CoinPack("coin_pack_vault", "Cofre de Moedas", 100000, "R$ 99,90", "+40% BÔNUS")
+    )
 
     // Override for customized Bafo opponents via invites/nearby
     var customOpponentName: String? = null
@@ -233,6 +269,56 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
     fun addManualCoins(amount: Int) {
         viewModelScope.launch {
             repository.addCoins(amount)
+        }
+    }
+
+    fun startBillingSimulation(pack: CoinPack) {
+        _billingState.value = BillingSimulationState.ChoosePaymentMethod(pack)
+    }
+
+    fun startElitePassBillingSimulation() {
+        _billingState.value = BillingSimulationState.BuyingElitePass("R$ 19,90")
+    }
+
+    fun cancelBillingSimulation() {
+        _billingState.value = null
+    }
+
+    fun selectPaymentAndProcess(pack: CoinPack, method: String) {
+        _billingState.value = BillingSimulationState.Processing(pack, method)
+        viewModelScope.launch {
+            delay(1500) // Simulate processing time with animation
+            repository.addCoins(pack.coinsAmount)
+            _billingState.value = BillingSimulationState.Success(pack, pack.coinsAmount)
+        }
+    }
+
+    fun processElitePassPurchase(method: String) {
+        _billingState.value = BillingSimulationState.Processing(
+            CoinPack("elite_pass", "Passe Elite", 0, "R$ 19,90"),
+            method
+        )
+        viewModelScope.launch {
+            delay(1500) // Simulate processing time with animation
+            _hasElitePass.value = true
+            repository.addCoins(5000) // Give substantial starting coins as bonus
+            _billingState.value = BillingSimulationState.ElitePassSuccess(5000)
+        }
+    }
+
+    fun playSimulatedAd() {
+        if (_isSimulatingAd.value) return
+        _isSimulatingAd.value = true
+        _adCountdown.value = 5 // Playful 5 seconds ad simulation instead of long 30s
+        viewModelScope.launch {
+            while (_adCountdown.value > 0) {
+                delay(1000)
+                _adCountdown.value = _adCountdown.value - 1
+            }
+            // Finished! Award the user
+            repository.addCoins(150)
+            _isSimulatingAd.value = false
+            _goalNotification.emit(Pair("Moedas de Recompensa! 🎥", "Você assistiu ao anúncio premiado e recebeu +150 moedas!"))
         }
     }
 
@@ -436,11 +522,36 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
                 opponentName = state.oppName
             )
 
+            if (_hasElitePass.value) {
+                // Double XP and Coins rewards for Elite Pass holders!
+                if (won) {
+                    repository.addXp(40)
+                    repository.addCoins(100)
+                } else {
+                    repository.addXp(10)
+                }
+                _goalNotification.emit(Pair("Bônus Passe Elite! 👑", "Seus prêmios da partida foram DOBRADOS!"))
+            }
+
+            val finalPrizeText = if (won) {
+                if (_hasElitePass.value) {
+                    "Você ganhou o card: ${state.oppWager.name} + 200 Moedas (2x Passe Elite)"
+                } else {
+                    "Você ganhou o card: ${state.oppWager.name} + 100 Moedas"
+                }
+            } else {
+                if (_hasElitePass.value) {
+                    "Você perdeu o card: ${state.myWager.name} (+20 XP Passe Elite)"
+                } else {
+                    "Você perdeu o card: ${state.myWager.name}"
+                }
+            }
+
             _battleState.value = BattleState.Result(
                 myWager = state.myWager,
                 oppWager = state.oppWager,
                 won = won,
-                prizeText = if (won) "Você ganhou o card: ${state.oppWager.name} + 100 Moedas" else "Você perdeu o card: ${state.myWager.name}"
+                prizeText = finalPrizeText
             )
         }
     }

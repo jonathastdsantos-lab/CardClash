@@ -365,6 +365,11 @@ fun CollectionScreen(
         val isLiveOverridden = liveSimulatedCards[card.id] == true
         val isPlayerLiveActive = isGenuineLive || isLiveOverridden
 
+        // Lifted state variables for card customization to avoid Compose remembering bugs inside conditional blocks
+        var isCustomizing by remember(card.id) { mutableStateOf(false) }
+        var editedName by remember(card.id, inv?.customName) { mutableStateOf(inv?.customName ?: "") }
+        var editedPhotoUrl by remember(card.id, inv?.customPhotoUrl) { mutableStateOf(inv?.customPhotoUrl ?: "") }
+
         AlertDialog(
             onDismissRequest = { selectedDetailCard = null },
             containerColor = StadiumConcrete,
@@ -529,7 +534,6 @@ fun CollectionScreen(
                     // PERSONALIZAÇÃO DA IDENTIDADE (OPÇÃO 1 - CUSTOM PHOTO & NAME)
                     if (qty > 0) {
                         Divider(color = Color.White.copy(alpha = 0.12f))
-                        var isCustomizing by remember { mutableStateOf(false) }
                         
                         Row(
                             modifier = Modifier
@@ -552,9 +556,6 @@ fun CollectionScreen(
                         }
 
                         if (isCustomizing) {
-                            var editedName by remember { mutableStateOf(inv?.customName ?: "") }
-                            var editedPhotoUrl by remember { mutableStateOf(inv?.customPhotoUrl ?: "") }
-                            
                             Column(
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
