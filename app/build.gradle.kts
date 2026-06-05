@@ -14,19 +14,25 @@ android {
     applicationId = "com.aistudio.cardclash.wjzkpa"
     minSdk = 24
     targetSdk = 36
-    versionCode = 3
-    versionName = "1.2"
+    
+    // Dynamic version code allocation to ensure strictly increasing version numbers
+    val buildNumber = System.getenv("BUILD_NUMBER")?.toIntOrNull()
+        ?: System.getenv("VERSION_CODE")?.toIntOrNull()
+        ?: (System.currentTimeMillis() / 60000).toInt()
+    versionCode = buildNumber
+    versionName = "1.3.$buildNumber"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
   signingConfigs {
     create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
+      val keystoreExists = file("${rootDir}/my-upload-key.jks").exists()
+      val keystorePath = System.getenv("KEYSTORE_PATH") ?: if (keystoreExists) "${rootDir}/my-upload-key.jks" else "${rootDir}/debug.keystore"
       storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD")
-      keyAlias = "upload"
-      keyPassword = System.getenv("KEY_PASSWORD")
+      storePassword = System.getenv("STORE_PASSWORD") ?: if (keystoreExists) "" else "android"
+      keyAlias = System.getenv("KEY_ALIAS") ?: if (keystoreExists) "upload" else "androiddebugkey"
+      keyPassword = System.getenv("KEY_PASSWORD") ?: if (keystoreExists) "" else "android"
     }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
