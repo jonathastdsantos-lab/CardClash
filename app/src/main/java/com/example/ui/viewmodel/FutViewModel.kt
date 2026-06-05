@@ -1,6 +1,7 @@
 package com.example.ui.viewmodel
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.local.AppDatabase
@@ -97,19 +98,323 @@ data class CoinPack(
     val bonusLabel: String? = null
 )
 
+data class PremiumPackProduct(
+    val id: String,
+    val name: String,
+    val description: String,
+    val priceBrl: String,
+    val packType: String,
+    val badge: String? = null
+)
+
 sealed class BillingSimulationState {
     data class ChoosePaymentMethod(val pack: CoinPack) : BillingSimulationState()
     data class Processing(val pack: CoinPack, val paymentMethod: String) : BillingSimulationState()
     data class Success(val pack: CoinPack, val coinsGranted: Int) : BillingSimulationState()
+    data class ChoosePremiumPackPayment(val product: PremiumPackProduct) : BillingSimulationState()
+    data class ProcessingPremiumPack(val product: PremiumPackProduct, val paymentMethod: String) : BillingSimulationState()
+    data class PremiumPackSuccess(val product: PremiumPackProduct) : BillingSimulationState()
     data class BuyingElitePass(val priceBrl: String) : BillingSimulationState()
     data class ElitePassSuccess(val bonusCoins: Int) : BillingSimulationState()
 }
+
+data class WaitlistGroup(
+    val code: String,
+    val name: String,
+    val type: String, // "Turma", "Trabalho", "Amigos"
+    val size: Int,
+    val queuePosition: Int
+)
 
 class FutViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: FutRepository
     private var liveSimJob: Job? = null
     private var quizTimerJob: Job? = null
+
+    // --- PRE-LAUNCH CAMPANHA COPA 2026 LISTA DE ESPERA ---
+    private val prefs = getApplication<Application>().getSharedPreferences("prelaunch_prefs", Context.MODE_PRIVATE)
+
+    private val _waitlistEmail = MutableStateFlow(prefs.getString("waitlist_email", "") ?: "")
+    val waitlistEmail: StateFlow<String> = _waitlistEmail.asStateFlow()
+
+    private val _predictedChampion = MutableStateFlow(prefs.getString("predicted_champion", "") ?: "")
+    val predictedChampion: StateFlow<String> = _predictedChampion.asStateFlow()
+
+    private val _isWaitlistRegistered = MutableStateFlow(prefs.getBoolean("is_waitlist_registered", false))
+    val isWaitlistRegistered: StateFlow<Boolean> = _isWaitlistRegistered.asStateFlow()
+
+    private val _waitlistQueuePosition = MutableStateFlow(prefs.getInt("waitlist_queue_position", 14854))
+    val waitlistQueuePosition: StateFlow<Int> = _waitlistQueuePosition.asStateFlow()
+
+    // --- PRE-LAUNCH SPONSOR & GROUPS ---
+    private val _waitlistGroupName = MutableStateFlow(prefs.getString("waitlist_group_name", "") ?: "")
+    val waitlistGroupName: StateFlow<String> = _waitlistGroupName.asStateFlow()
+
+    private val _waitlistGroupCode = MutableStateFlow(prefs.getString("waitlist_group_code", "") ?: "")
+    val waitlistGroupCode: StateFlow<String> = _waitlistGroupCode.asStateFlow()
+
+    private val _waitlistGroupType = MutableStateFlow(prefs.getString("waitlist_group_type", "") ?: "")
+    val waitlistGroupType: StateFlow<String> = _waitlistGroupType.asStateFlow()
+
+    private val _waitlistGroupSize = MutableStateFlow(prefs.getInt("waitlist_group_size", 0))
+    val waitlistGroupSize: StateFlow<Int> = _waitlistGroupSize.asStateFlow()
+
+    private val _waitlistGroupPosition = MutableStateFlow(prefs.getInt("waitlist_group_position", 0))
+    val waitlistGroupPosition: StateFlow<Int> = _waitlistGroupPosition.asStateFlow()
+
+    private val _waitlistGroupMembers = MutableStateFlow<List<String>>(
+        prefs.getString("waitlist_group_members", "")?.split(",")?.filter { it.isNotBlank() } ?: emptyList()
+    )
+    val waitlistGroupMembers: StateFlow<List<String>> = _waitlistGroupMembers.asStateFlow()
+
+    private val _waitlistGroupLeaderboard = MutableStateFlow<List<WaitlistGroup>>(
+        listOf(
+            WaitlistGroup("CLASH-TRABALHO-DEV", "Devs do Hexa 💻", "Trabalho", 48, 12),
+            WaitlistGroup("CLASH-TURMA-EFE", "Educação Física UFRJ ⚽", "Turma", 35, 18),
+            WaitlistGroup("CLASH-AMIGOS-PEL", "Pelada de Quarta 🍻", "Amigos", 24, 42),
+            WaitlistGroup("CLASH-FAMILIA-SIL", "Família Silva 🏆", "Família", 18, 89)
+        )
+    )
+    val waitlistGroupLeaderboard: StateFlow<List<WaitlistGroup>> = _waitlistGroupLeaderboard.asStateFlow()
+
+    private val _redeemedSponsorCodes = MutableStateFlow<Set<String>>(
+        prefs.getStringSet("redeemed_sponsor_codes", emptySet()) ?: emptySet()
+    )
+    val redeemedSponsorCodes: StateFlow<Set<String>> = _redeemedSponsorCodes.asStateFlow()
+
+    fun boostWaitlistPosition(reduction: Int) {
+        viewModelScope.launch {
+            val currentPos = _waitlistQueuePosition.value
+            val newPos = (currentPos - reduction).coerceAtLeast(112) // Ensure it stops before priority #1
+            prefs.edit().putInt("waitlist_queue_position", newPos).apply()
+            _waitlistQueuePosition.value = newPos
+        }
+    }
+
+    fun createWaitlistGroup(name: String, type: String, callback: (Boolean, String) -> Unit) {
+        if (name.isBlank()) {
+            callback(false, "Insira um nome válido para o seu grupo!")
+            return
+        }
+        val randCode = "CLASH-${type.substring(0, 3).uppercase()}-${Random.nextInt(1000, 9999)}"
+        viewModelScope.launch {
+            prefs.edit()
+                .putString("waitlist_group_name", name)
+                .putString("waitlist_group_code", randCode)
+                .putString("waitlist_group_type", type)
+                .putInt("waitlist_group_size", 1)
+                .putInt("waitlist_group_position", 120)
+                .putString("waitlist_group_members", "Você")
+                .apply()
+
+            _waitlistGroupName.value = name
+            _waitlistGroupCode.value = randCode
+            _waitlistGroupType.value = type
+            _waitlistGroupSize.value = 1
+            _waitlistGroupPosition.value = 120
+            _waitlistGroupMembers.value = listOf("Você")
+
+            updateGroupLeaderboardWithUser(randCode, name, type, 1, 120)
+            boostWaitlistPosition(1000)
+
+            callback(true, "Grupo '$name' criado com sucesso! Compartilhe o ID: $randCode. Você avançou 1.000 posições na fila!")
+        }
+    }
+
+    fun joinWaitlistGroup(code: String, callback: (Boolean, String) -> Unit) {
+        val cleanCode = code.trim().uppercase()
+        if (cleanCode.isBlank()) {
+            callback(false, "Por favor, insira um ID de grupo!")
+            return
+        }
+        if (cleanCode == _waitlistGroupCode.value) {
+            callback(false, "Você já está participando de seu próprio grupo!")
+            return
+        }
+
+        viewModelScope.launch {
+            val matchingDummy = _waitlistGroupLeaderboard.value.find { it.code == cleanCode }
+            val groupName = matchingDummy?.name ?: "Turma de Colecionadores"
+            val groupType = matchingDummy?.type ?: "Amigos"
+            val baseSize = matchingDummy?.size ?: 5
+            val newSize = baseSize + 1
+            val newPosition = (matchingDummy?.queuePosition ?: 150) - 1
+
+            val mockMembers = when (cleanCode) {
+                "CLASH-TRABALHO-DEV", "CLASH-TRA-1234", "CLASH-TRA-9999" -> listOf("Você", "Rodrigo_Dev", "Amanda_Front", "Thiago_M", "Leo_Infra")
+                "CLASH-TURMA-EFE", "CLASH-TUR-1234", "CLASH-TUR-9999" -> listOf("Você", "Prof_Marcos", "Leticia_EDF", "Gustavo_Fit")
+                "CLASH-AMIGOS-PEL", "CLASH-AMI-1234", "CLASH-AMI-9999" -> listOf("Você", "Ze_Pelada", "Kiko_Goleiro", "Chico_Meio")
+                "CLASH-FAMILIA-SIL", "CLASH-FAM-1234", "CLASH-FAM-9999" -> listOf("Você", "Tio_Beto", "Priscila", "Vovô_Chico")
+                else -> listOf("Você", "Amigo_Fiel", "Craque_Bairro")
+            }
+
+            prefs.edit()
+                .putString("waitlist_group_name", groupName)
+                .putString("waitlist_group_code", cleanCode)
+                .putString("waitlist_group_type", groupType)
+                .putInt("waitlist_group_size", newSize)
+                .putInt("waitlist_group_position", newPosition)
+                .putString("waitlist_group_members", mockMembers.joinToString(","))
+                .apply()
+
+            _waitlistGroupName.value = groupName
+            _waitlistGroupCode.value = cleanCode
+            _waitlistGroupType.value = groupType
+            _waitlistGroupSize.value = newSize
+            _waitlistGroupPosition.value = newPosition
+            _waitlistGroupMembers.value = mockMembers
+
+            updateGroupLeaderboardWithUser(cleanCode, groupName, groupType, newSize, newPosition)
+            boostWaitlistPosition(1800)
+
+            callback(true, "Você se juntou ao grupo '$groupName'! Sua equipe tem agora $newSize participantes e você subiu 1.800 posições!")
+        }
+    }
+
+    fun leaveWaitlistGroup() {
+        viewModelScope.launch {
+            prefs.edit()
+                .remove("waitlist_group_name")
+                .remove("waitlist_group_code")
+                .remove("waitlist_group_type")
+                .remove("waitlist_group_size")
+                .remove("waitlist_group_position")
+                .remove("waitlist_group_members")
+                .apply()
+
+            _waitlistGroupName.value = ""
+            _waitlistGroupCode.value = ""
+            _waitlistGroupType.value = ""
+            _waitlistGroupSize.value = 0
+            _waitlistGroupPosition.value = 0
+            _waitlistGroupMembers.value = emptyList()
+
+            _waitlistGroupLeaderboard.value = listOf(
+                WaitlistGroup("CLASH-TRABALHO-DEV", "Devs do Hexa 💻", "Trabalho", 48, 12),
+                WaitlistGroup("CLASH-TURMA-EFE", "Educação Física UFRJ ⚽", "Turma", 35, 18),
+                WaitlistGroup("CLASH-AMIGOS-PEL", "Pelada de Quarta 🍻", "Amigos", 24, 42),
+                WaitlistGroup("CLASH-FAMILIA-SIL", "Família Silva 🏆", "Família", 18, 89)
+            )
+        }
+    }
+
+    private fun updateGroupLeaderboardWithUser(code: String, name: String, type: String, size: Int, pos: Int) {
+        val list = _waitlistGroupLeaderboard.value.toMutableList()
+        val index = list.indexOfFirst { it.code == code }
+        if (index != -1) {
+            list[index] = WaitlistGroup(code, name, type, size, pos)
+        } else {
+            list.add(WaitlistGroup(code, name, type, size, pos))
+        }
+        _waitlistGroupLeaderboard.value = list.sortedBy { it.queuePosition }
+    }
+
+    fun redeemSponsorCode(code: String, callback: (Boolean, String) -> Unit) {
+        val cleanCode = code.trim().uppercase()
+        if (cleanCode.isBlank()) {
+            callback(false, "Por favor, digite um código de patrocínio!")
+            return
+        }
+        if (_redeemedSponsorCodes.value.contains(cleanCode)) {
+            callback(false, "Este código já foi resgatado por você!")
+            return
+        }
+
+        viewModelScope.launch {
+            when (cleanCode) {
+                "DAORA-HEXA-2026" -> {
+                    boostWaitlistPosition(3500)
+                    repository.saveInventoryItem(
+                        UserInventory(
+                            cardId = 32, // Yamal
+                            quantity = 1,
+                            isFavorite = true
+                        )
+                    )
+                    addRedeemedCode(cleanCode)
+                    callback(true, "Código do Guaraná Daora resgatado! Você pulou 3.500 posições na fila de espera e desbloqueou a Carta Premium de Lamine Yamal no Álbum! 🥤⚽")
+                }
+                "PIPOPO-CHAMPS" -> {
+                    boostWaitlistPosition(2500)
+                    repository.saveInventoryItem(
+                        UserInventory(
+                            cardId = 33, // Mbappé
+                            quantity = 1,
+                            isFavorite = false
+                        )
+                    )
+                    addRedeemedCode(cleanCode)
+                    callback(true, "Código de Pipopo CrocChamps resgatado! Você pulou 2.500 posições e faturou a Carta Especial de Mbappé! 🍿⚡")
+                }
+                "BATER-BAFO-LOCAL" -> {
+                    boostWaitlistPosition(1500)
+                    addRedeemedCode(cleanCode)
+                    callback(true, "Cupom do Comércio de Bairro resgatado! Você pulou 1.500 posições na fila! 🏪💨")
+                }
+                "COPA2026", "CARDCLASH" -> {
+                    boostWaitlistPosition(1000)
+                    addRedeemedCode(cleanCode)
+                    callback(true, "Parceiro de Snack resgatado! Esse cupom oficial concedeu 1.000 posições de bônus! ⚽🍟")
+                }
+                else -> {
+                    callback(
+                        false,
+                        "Código inválido! Os códigos físicos de bebidas ficam sob a tampa das garrafas de Guaraná Daora e os de Snacks ficam no verso do pacote CrocChamps Pipopo!"
+                    )
+                }
+            }
+        }
+    }
+
+    private fun addRedeemedCode(code: String) {
+        val newSet = _redeemedSponsorCodes.value.toMutableSet()
+        newSet.add(code)
+        prefs.edit().putStringSet("redeemed_sponsor_codes", newSet).apply()
+        _redeemedSponsorCodes.value = newSet
+    }
+
+    fun registerInWaitlist(email: String, prediction: String, callback: (Boolean, String) -> Unit) {
+        if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            callback(false, "Por favor, insira um e-mail válido para a lista de espera!")
+            return
+        }
+        if (prediction.isBlank()) {
+            callback(false, "Por favor, escolha uma equipe como campeã da Copa!")
+            return
+        }
+
+        viewModelScope.launch {
+            prefs.edit()
+                .putString("waitlist_email", email)
+                .putString("predicted_champion", prediction)
+                .putBoolean("is_waitlist_registered", true)
+                .apply()
+
+            _waitlistEmail.value = email
+            _predictedChampion.value = prediction
+            _isWaitlistRegistered.value = true
+
+            // Current simulated UTC time is June 5, 2026, which is BEFORE June 11, 2026.
+            // Check programmatically:
+            val cutoff = 1781136000000L // 11 June 2026 UTC
+            val currentTime = System.currentTimeMillis()
+            if (currentTime < cutoff) {
+                // Let's grant the user the exclusive Card de Fundador "Origem" (ID 30) directly!
+                repository.saveInventoryItem(
+                    UserInventory(
+                        cardId = 30,
+                        quantity = 1,
+                        isFavorite = true,
+                        inBattleDeck = true
+                    )
+                )
+                callback(true, "Parabéns! Inscrição confirmada na lista de espera! Você garantiu e resgatou o raro Card Especial de Fundador 'Origem' (#30) no seu Álbum!")
+            } else {
+                callback(true, "Inscrito com sucesso na lista de espera! Você palpitou no $prediction. Seu Card de Fundador 'Origem' infelizmente expirou (período acabou dia 11/06/2026).")
+            }
+        }
+    }
 
     // --- MONETIZATION STATE FLOWS ---
     private val _hasElitePass = MutableStateFlow(false)
@@ -129,6 +434,12 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
         CoinPack("coin_pack_medium", "Saco de Moedas", 10000, "R$ 14,90", "+10% BÔNUS"),
         CoinPack("coin_pack_large", "Baú de Moedas", 35000, "R$ 39,90", "+25% BÔNUS"),
         CoinPack("coin_pack_vault", "Cofre de Moedas", 100000, "R$ 99,90", "+40% BÔNUS")
+    )
+
+    val availablePremiumPacks = listOf(
+        PremiumPackProduct("prem_pack_rare", "Pacote Ouro Real", "Garante 4 cards com ótimas chances de Ouro, Especial e Lendária, sem moedas!", "R$ 4,90", "OURO", "🔥 POPULAR"),
+        PremiumPackProduct("prem_pack_special", "Pacote Elite Seleção", "Contém 4 cards com chances aumentadas de craques da Seleção e Especiais!", "R$ 7,90", "PREMIUM", "✨ BRASIL"),
+        PremiumPackProduct("prem_pack_legendary", "Megapacote Lendas Reais", "Garante 5 cards com pelo menos 1 Lendária, Assinada ou Animada de Elite de valor máximo!", "R$ 11,90", "LENDARIO", "👑 SUPREMO")
     )
 
     // Override for customized Bafo opponents via invites/nearby
@@ -284,6 +595,23 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
         _billingState.value = null
     }
 
+    fun startPremiumPackBillingSimulation(product: PremiumPackProduct) {
+        _billingState.value = BillingSimulationState.ChoosePremiumPackPayment(product)
+    }
+
+    fun selectPremiumPackPaymentAndProcess(product: PremiumPackProduct, method: String) {
+        _billingState.value = BillingSimulationState.ProcessingPremiumPack(product, method)
+        viewModelScope.launch {
+            delay(1500)
+            _billingState.value = BillingSimulationState.PremiumPackSuccess(product)
+        }
+    }
+
+    fun completePremiumPackPurchaseAndOpen(product: PremiumPackProduct) {
+        _billingState.value = null
+        buyPack(product.packType, 0) // Triggers unboxing animation with cost = 0 (free of coin deduct!)
+    }
+
     fun selectPaymentAndProcess(pack: CoinPack, method: String) {
         _billingState.value = BillingSimulationState.Processing(pack, method)
         viewModelScope.launch {
@@ -302,6 +630,7 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
             delay(1500) // Simulate processing time with animation
             _hasElitePass.value = true
             repository.addCoins(5000) // Give substantial starting coins as bonus
+            repository.addElitePassBonusCard(2) // Give Ronaldinho (id = 2) as a protected Premium card!
             _billingState.value = BillingSimulationState.ElitePassSuccess(5000)
         }
     }
@@ -349,7 +678,7 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun customizePlayerCard(cardId: Int, customName: String?, customPhotoUrl: String?, callback: (Boolean, String) -> Unit) {
+    fun customizePlayerCard(cardId: Int, customName: String?, customPhotoUrl: String?, customClubAndCountry: String?, callback: (Boolean, String) -> Unit) {
         viewModelScope.launch {
             val currentUnit = repository.getInventoryItem(cardId) ?: return@launch
             if (currentUnit.quantity <= 0) {
@@ -358,10 +687,46 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
             }
             val updatedItem = currentUnit.copy(
                 customName = if (customName.isNullOrBlank()) null else customName,
-                customPhotoUrl = if (customPhotoUrl.isNullOrBlank()) null else customPhotoUrl
+                customPhotoUrl = if (customPhotoUrl.isNullOrBlank()) null else customPhotoUrl,
+                customClubAndCountry = if (customClubAndCountry.isNullOrBlank()) null else customClubAndCountry
             )
             repository.saveInventoryItem(updatedItem)
             callback(true, "Card personalizado com sucesso!")
+        }
+    }
+
+    fun updateCardSticker(cardId: Int, stickerEmoji: String?, callback: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val currentUnit = repository.getInventoryItem(cardId) ?: return@launch
+            if (currentUnit.quantity <= 0) {
+                callback(false, "Você não possui este card!")
+                return@launch
+            }
+            val updatedItem = currentUnit.copy(
+                stickerEmoji = stickerEmoji
+            )
+            repository.saveInventoryItem(updatedItem)
+            callback(true, if (stickerEmoji != null) "Adesivo '$stickerEmoji' colado com sucesso!" else "Adesivo removido!")
+        }
+    }
+
+    fun autoFillPlayerCardFromIA(cardId: Int, playerName: String, callback: (Boolean, String, com.example.data.api.PlayerUpdateInfo?) -> Unit) {
+        viewModelScope.launch {
+            val currentUnit = repository.getInventoryItem(cardId) ?: return@launch
+            if (currentUnit.quantity <= 0) {
+                callback(false, "Você não possui este card!", null)
+                return@launch
+            }
+            try {
+                val info = com.example.data.api.GeminiApiClient.fetchPlayerUpdates(playerName)
+                if (info != null) {
+                    callback(true, "Dados do jogador '$playerName' carregados com Inteligência Artificial!", info)
+                } else {
+                    callback(false, "Falha ao obter dados automáticos do jogador '$playerName'. Usando fallback de teste local de IA ou verifique sua API Key.", null)
+                }
+            } catch (e: Exception) {
+                callback(false, "Erro ao carregar dados por IA: ${e.message}", null)
+            }
         }
     }
 
@@ -679,7 +1044,10 @@ class FutViewModel(application: Application) : AndroidViewModel(application) {
                 delay(9000) // Simulates events every 9 seconds inside the platform
                 val notif = repository.simulateLiveTick()
                 if (notif != null) {
-                    _goalNotification.emit(notif)
+                    val isPlayingBafo = _selectedTab.value == AppTab.BAFO || _battleState.value != BattleState.Idle
+                    if (!isPlayingBafo) {
+                        _goalNotification.emit(notif)
+                    }
                 }
             }
         }

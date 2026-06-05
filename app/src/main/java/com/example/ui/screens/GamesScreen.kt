@@ -5,6 +5,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -118,11 +120,19 @@ fun GamesScreen(
             is QuizState.Active -> {
                 // Interactive Question Display
                 val q = quizState.question
+                val activeScrollState = rememberScrollState()
 
                 Column(
                     modifier = Modifier.fillMaxSize().weight(1f),
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .verticalScroll(activeScrollState),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
                     // Timer bar
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -228,7 +238,9 @@ fun GamesScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.weight(1f))
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // Confirmation action buttons
                     if (quizState.isAnswered) {

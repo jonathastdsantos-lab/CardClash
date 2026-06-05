@@ -11,6 +11,8 @@ import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,6 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.data.model.*
+import com.example.ui.components.InteractiveTutorialBottomSheet
+import com.example.ui.components.PreLaunchLandingDialog
 import com.example.ui.screens.*
 import com.example.ui.theme.*
 import com.example.ui.viewmodel.*
@@ -52,6 +56,7 @@ class MainActivity : ComponentActivity() {
                 
                 if (profile == null) {
                     LoginScreen(
+                        viewModel = viewModel,
                         onRegisterSuccess = { name, team, age, provider ->
                             viewModel.registerUser(name, team, age, provider)
                         }
@@ -69,6 +74,16 @@ class MainActivity : ComponentActivity() {
 fun DashboardContent(viewModel: FutViewModel, profile: UserProfile) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    var showTutorialSheet by remember { mutableStateOf(false) }
+    var showPreLaunchCampaignDialog by remember { mutableStateOf(false) }
+
+    // Auto-trigger tutorial on first registration (Level 1 and exactly 1200 starting coins)
+    LaunchedEffect(profile.id) {
+        if (profile.level == 1 && profile.coins == 1200) {
+            showTutorialSheet = true
+        }
+    }
 
     // ViewModel subscriptions
     val activeTab by viewModel.selectedTab.collectAsStateWithLifecycle()
@@ -206,6 +221,27 @@ fun DashboardContent(viewModel: FutViewModel, profile: UserProfile) {
                             }
                         }
 
+                        // Left/middle help chip to launch Interactive Tutorial Onboarding
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier
+                                .background(NeonEmerald.copy(alpha = 0.12f), shape = RoundedCornerShape(12.dp))
+                                .border(1.dp, NeonEmerald.copy(alpha = 0.35f), shape = RoundedCornerShape(12.dp))
+                                .clickable {
+                                    showTutorialSheet = true
+                                }
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                                .testTag("tutorial_launcher_chip")
+                        ) {
+                            Text(
+                                text = "🎮 Como Jogar",
+                                color = NeonEmerald,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
                         // Coins Balance with custom $ pill
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -310,8 +346,17 @@ fun DashboardContent(viewModel: FutViewModel, profile: UserProfile) {
                         liveMatches = liveMatches,
                         onToggleBattleDeck = { cardId -> viewModel.toggleDeckStatus(cardId) },
                         onUpgradeCard = { cardId, cb -> viewModel.upgradePlayerCard(cardId, cb) },
-                        onCustomizeCard = { cardId, customName, customPhotoUrl, cb -> 
-                            viewModel.customizePlayerCard(cardId, customName, customPhotoUrl, cb)
+                        onCustomizeCard = { cardId, customName, customPhotoUrl, customClubAndCountry, cb -> 
+                            viewModel.customizePlayerCard(cardId, customName, customPhotoUrl, customClubAndCountry, cb)
+                        },
+                        onAutoFillCardFromIA = { cardId, playerName, cb ->
+                            viewModel.autoFillPlayerCardFromIA(cardId, playerName, cb)
+                        },
+                        onUpdateCardSticker = { cardId, sticker, cb ->
+                            viewModel.updateCardSticker(cardId, sticker, cb)
+                        },
+                        onOpenPreLaunchCampaign = {
+                            showPreLaunchCampaignDialog = true
                         }
                     )
                 }
@@ -324,6 +369,7 @@ fun DashboardContent(viewModel: FutViewModel, profile: UserProfile) {
                         onBuyPack = { type, price -> viewModel.buyPack(type, price) },
                         onDismissPack = { viewModel.dismissPackOpening() },
                         availableCoinPacks = viewModel.availableCoinPacks,
+                        availablePremiumPacks = viewModel.availablePremiumPacks,
                         billingState = billingState,
                         hasElitePass = hasElitePass,
                         isSimulatingAd = isSimulatingAd,
@@ -333,7 +379,10 @@ fun DashboardContent(viewModel: FutViewModel, profile: UserProfile) {
                         onCancelBilling = { viewModel.cancelBillingSimulation() },
                         onSelectPaymentAndProcess = { pack, method -> viewModel.selectPaymentAndProcess(pack, method) },
                         onProcessElitePassPurchase = { method -> viewModel.processElitePassPurchase(method) },
-                        onPlayAd = { viewModel.playSimulatedAd() }
+                        onPlayAd = { viewModel.playSimulatedAd() },
+                        onStartPremiumPackBilling = { prod -> viewModel.startPremiumPackBillingSimulation(prod) },
+                        onSelectPremiumPackPaymentAndProcess = { prod, method -> viewModel.selectPremiumPackPaymentAndProcess(prod, method) },
+                        onCompletePremiumPackPurchaseAndOpen = { prod -> viewModel.completePremiumPackPurchaseAndOpen(prod) }
                     )
                 }
 
@@ -407,6 +456,20 @@ fun DashboardContent(viewModel: FutViewModel, profile: UserProfile) {
                     })
                 }
             }
+
+            if (showTutorialSheet) {
+                InteractiveTutorialBottomSheet(
+                    onDismissRequest = { showTutorialSheet = false },
+                    onAwardCoins = { amount -> viewModel.addManualCoins(amount) }
+                )
+            }
+
+            if (showPreLaunchCampaignDialog) {
+                PreLaunchLandingDialog(
+                    viewModel = viewModel,
+                    onDismiss = { showPreLaunchCampaignDialog = false }
+                )
+            }
         }
     }
 }
@@ -441,6 +504,7 @@ fun ProfileScreen(profile: UserProfile, onClearCache: () -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .background(StadiumObsidian)
+            .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -567,7 +631,7 @@ fun ProfileScreen(profile: UserProfile, onClearCache: () -> Unit) {
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(24.dp))
 
         Button(
             colors = ButtonDefaults.buttonColors(containerColor = StadiumGlow),

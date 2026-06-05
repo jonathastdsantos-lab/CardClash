@@ -7,6 +7,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -36,6 +38,9 @@ import com.example.ui.viewmodel.NearbyUser
 import com.example.ui.viewmodel.BattleGroup
 import com.example.ui.viewmodel.FriendInvite
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,6 +99,34 @@ fun BafoBattleScreen(
         label = "radar"
     )
 
+    // Option 2: Competitive Announcer Soundboard Haptic Simulator State
+    var activeComicSticker by remember { mutableStateOf<String?>(null) }
+    var activeCommentaryText by remember { mutableStateOf<String?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+    val localHaptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+
+    val playAnnouncerSound = { text: String, sticker: String, hapticTimes: Int ->
+        activeCommentaryText = text
+        activeComicSticker = sticker
+        coroutineScope.launch {
+            repeat(hapticTimes) {
+                try {
+                    localHaptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                } catch (e: Exception) {
+                    // Fail-safe in emulator environments
+                }
+                kotlinx.coroutines.delay(100)
+            }
+            kotlinx.coroutines.delay(1800)
+            if (activeComicSticker == sticker) {
+                activeComicSticker = null
+            }
+            if (activeCommentaryText == text) {
+                activeCommentaryText = null
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -144,9 +177,10 @@ fun BafoBattleScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .weight(1f),
+                                .weight(1f)
+                                .verticalScroll(rememberScrollState()),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.ElectricBolt,
@@ -219,9 +253,11 @@ fun BafoBattleScreen(
                             if (!isGpsPermitted) {
                                 // Request Location block
                                 Column(
-                                    modifier = Modifier.fillMaxSize(),
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .verticalScroll(rememberScrollState()),
                                     horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Place,
@@ -605,7 +641,8 @@ fun BafoBattleScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .weight(1f),
+                                .weight(1f)
+                                .verticalScroll(rememberScrollState()),
                             verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             var friendNicknameToInvite by remember { mutableStateOf("") }
@@ -851,7 +888,8 @@ fun BafoBattleScreen(
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .weight(1f),
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(
@@ -895,9 +933,10 @@ fun BafoBattleScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .weight(1f),
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     // Scorecard row
                     Row(
@@ -956,9 +995,94 @@ fun BafoBattleScreen(
                         ) {
                             FutCardView(card = battleState.myWager)
                         }
+
+                        // Option 2: Active Narrator comic sticker overlay
+                        if (activeComicSticker != null) {
+                            Box(
+                                modifier = Modifier
+                                    .background(Color.Black.copy(alpha = 0.9f), shape = RoundedCornerShape(12.dp))
+                                    .border(1.5.dp, NeonEmerald, shape = RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                                    .align(Alignment.Center)
+                                    .rotate(-8f)
+                                    .scale(1.15f),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = activeComicSticker!!,
+                                    color = Color.White,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    // Option 2: Active Soundboard Board
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "🔊 Mesa de Voz do Narrador (Som & Haptic)",
+                            color = NeonCyan,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally)
+                        ) {
+                            val soundboardCollection = listOf(
+                                Triple("📢 TOMA!", "Narrador: SE PREPARA QUE LÁ VEM CONCHADA ESTILO RETRÔ!", "POW! 👋💥"),
+                                Triple("📢 AMASSOU!", "Narrador: ESSA APERTADA VAI DOER ATÉ EM 2026!", "AMASSADO! 🔨💥"),
+                                Triple("📢 GOOL!", "Narrador: MINHA NOSSA SENHORA! ELIMIDOU O OPONENTE DA MESA!", "CRAQUE! 🏆👑"),
+                                Triple("📢 BAFO!", "Narrador: BATEU DE CONCHA NO MEIO DA FIGURINHA!", "VIRA-TUDO! ⚡🔥")
+                            )
+                            soundboardCollection.forEach { (lbl, comment, sticker) ->
+                                Button(
+                                    onClick = {
+                                        playAnnouncerSound(comment, sticker, 2)
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = StadiumGlow),
+                                    modifier = Modifier
+                                        .height(28.dp)
+                                        .weight(1f)
+                                        .border(0.5.dp, Color.White.copy(alpha = 0.15f), shape = RoundedCornerShape(14.dp)),
+                                    contentPadding = PaddingValues(0.dp),
+                                    shape = RoundedCornerShape(14.dp)
+                                ) {
+                                    Text(text = lbl, color = Color.White, fontSize = 8.sp, fontWeight = FontWeight.Black)
+                                }
+                            }
+                        }
+                    }
+
+                    // Option 2: Commentary visual speech bubble
+                    if (activeCommentaryText != null) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(0.95f)
+                                .background(Color(0xFF0F172A), shape = RoundedCornerShape(8.dp))
+                                .border(1.dp, NeonCyan.copy(alpha = 0.4f), shape = RoundedCornerShape(8.dp))
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = activeCommentaryText!!,
+                                color = NeonCyan,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     // Instruction status banner
                     Text(
@@ -1024,6 +1148,15 @@ fun BafoBattleScreen(
                                 onClick = {
                                     onUpdatePower(currentPowerCycle)
                                     onExecuteSlap()
+                                    // Option 2: Automated Haptic Voice effects and Comic overlay on Hit action!
+                                    val power = currentPowerCycle
+                                    if (power in 0.6f..0.8f) {
+                                        playAnnouncerSound("Narrador: BATEU CONCHINHA PERFEITA! QUE CONTROLE ESPETACULAR!", "PERFEITO! 👑💥", 3)
+                                    } else if (power < 0.45f) {
+                                        playAnnouncerSound("Narrador: VENTOU! O ar deu carona por baixo e a figurinha nem mexeu!", "VENTOU... 🌀💨", 1)
+                                    } else {
+                                        playAnnouncerSound("Narrador: PAULADA! Amassou o chão do estádio e doeu a mão!", "PAULADA! 🔨🔥", 2)
+                                    }
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth(0.85f)
@@ -1045,9 +1178,10 @@ fun BafoBattleScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .weight(1f),
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically)
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
                     Text(
                         text = if (battleState.won) "VITÓRIA GLORIOSA! 🏆🎉" else "CARD PERDIDO!",

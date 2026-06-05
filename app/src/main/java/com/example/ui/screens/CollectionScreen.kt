@@ -5,6 +5,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
@@ -14,6 +15,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.FlashOn
@@ -44,13 +47,20 @@ fun CollectionScreen(
     liveMatches: List<LiveMatch> = emptyList(),
     onToggleBattleDeck: (Int) -> Unit,
     onUpgradeCard: (Int, (Boolean, String) -> Unit) -> Unit,
-    onCustomizeCard: (Int, String?, String?, (Boolean, String) -> Unit) -> Unit
+    onCustomizeCard: (Int, String?, String?, String?, (Boolean, String) -> Unit) -> Unit,
+    onAutoFillCardFromIA: (Int, String, (Boolean, String, com.example.data.api.PlayerUpdateInfo?) -> Unit) -> Unit,
+    onUpdateCardSticker: (Int, String?, (Boolean, String) -> Unit) -> Unit,
+    onOpenPreLaunchCampaign: () -> Unit
 ) {
     val context = LocalContext.current
     var rarityFilter by remember { mutableStateOf<Rarity?>(null) }
     var positionFilter by remember { mutableStateOf<Position?>(null) }
     var ownedOnly by remember { mutableStateOf(false) }
+    var upadasOnly by remember { mutableStateOf(false) }
+    var stickerOnly by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
+    var isFiltersExpanded by remember { mutableStateOf(false) }
+    var selectedLeagueFilter by remember { mutableStateOf<String?>("Brasileirão 2026") }
 
     // Map database inventory index by Card ID
     val inventoryMap = remember(inventory) {
@@ -67,26 +77,41 @@ fun CollectionScreen(
     var selectedMatchDetails by remember { mutableStateOf<String?>(null) }
 
     // Filter cards
-    val filteredCards = remember(rarityFilter, positionFilter, ownedOnly, searchQuery, inventoryMap) {
+    val filteredCards = remember(rarityFilter, positionFilter, ownedOnly, upadasOnly, stickerOnly, searchQuery, selectedLeagueFilter, inventoryMap) {
         CardCatalog.cards.filter { card ->
             val matchesRarity = rarityFilter == null || card.rarity == rarityFilter
             val matchesPosition = positionFilter == null || card.position == positionFilter
+            val matchesLeague = selectedLeagueFilter == null || card.league == selectedLeagueFilter
             val inv = inventoryMap[card.id]
             val hasCard = inv != null && inv.quantity > 0
             val matchesOwned = !ownedOnly || hasCard
             
+            val matchesUpadas = !upadasOnly || (inv != null && inv.upgradeLevel > 0)
+            val matchesSticker = !stickerOnly || (inv != null && !inv.stickerEmoji.isNullOrBlank())
+            
             val displayName = inv?.customName ?: card.name
             val matchesSearch = displayName.contains(searchQuery, ignoreCase = true) || 
                                 card.clubAndCountry.contains(searchQuery, ignoreCase = true)
-            matchesRarity && matchesPosition && matchesOwned && matchesSearch
+            matchesRarity && matchesPosition && matchesOwned && matchesUpadas && matchesSticker && matchesSearch && matchesLeague
         }
     }
 
     // Completion percentage calculation
-    val totalAvailable = CardCatalog.cards.size
-    val uniqueOwned = CardCatalog.cards.count { card ->
-        val inv = inventoryMap[card.id]
-        inv != null && inv.quantity > 0
+    val totalAvailable = remember(selectedLeagueFilter) {
+        if (selectedLeagueFilter == null) CardCatalog.cards.size 
+        else CardCatalog.cards.count { it.league == selectedLeagueFilter }
+    }
+    val uniqueOwned = remember(selectedLeagueFilter, inventoryMap) {
+        if (selectedLeagueFilter == null) {
+            CardCatalog.cards.count { card ->
+                val inv = inventoryMap[card.id]
+                inv != null && inv.quantity > 0
+            }
+        } else {
+            CardCatalog.cards.count { card ->
+                card.league == selectedLeagueFilter && (inventoryMap[card.id]?.quantity ?: 0) > 0
+            }
+        }
     }
     val completionPercent = if (totalAvailable > 0) (uniqueOwned * 100) / totalAvailable else 0
 
@@ -97,64 +122,155 @@ fun CollectionScreen(
             .statusBarsPadding(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Upper Progress Card
+        // 🏆 Copa 2026 pre-launch campaign promo bar
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(horizontal = 16.dp, vertical = 4.dp)
+                .border(1.dp, NeonCyan.copy(alpha = 0.5f), shape = RoundedCornerShape(8.dp))
+                .clickable { onOpenPreLaunchCampaign() },
+            colors = CardDefaults.cardColors(containerColor = StadiumConcrete)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(text = "🏆", fontSize = 16.sp)
+                Text(
+                    text = "Copa 2026: \"Quando a Copa acabar, sua coleção continua.\" Participe do Bracket grátis!",
+                    color = NeonCyan,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(text = "PARTICIPAR ➔", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Black)
+            }
+        }
+
+        // Upper Progress Card - Sleek, space-saving design
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 4.dp)
                 .border(1.dp, StadiumBorder, shape = RoundedCornerShape(12.dp)),
             colors = CardDefaults.cardColors(containerColor = StadiumConcrete)
         ) {
             Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = if (selectedLeagueFilter == null) "Álbum Geral" else selectedLeagueFilter!!,
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                        Box(
+                            modifier = Modifier
+                                .background(NeonEmerald.copy(alpha = 0.15f), shape = RoundedCornerShape(4.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "$uniqueOwned / $totalAvailable",
+                                color = NeonEmerald,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Black
+                            )
+                        }
+                    }
                     Text(
-                        text = "Álbum de Figurinhas",
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                    Text(
-                        text = "$uniqueOwned/$totalAvailable Cards",
+                        text = "$completionPercent% Completo",
                         color = NeonCyan,
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
 
                 LinearProgressIndicator(
                     progress = { completionPercent / 100f },
-                    modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(5.dp)
+                        .clip(RoundedCornerShape(3.dp)),
                     color = NeonEmerald,
                     trackColor = StadiumGlow
                 )
+            }
+        }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+        // Horizontal league/championship filter scroll
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val leaguesList = listOf(
+                "Brasileirão 2026",
+                "Champions 25",
+                "Premier League",
+                "La Liga",
+                "MLS",
+                "Copa do Mundo",
+                null
+            )
+            leaguesList.forEach { league ->
+                val isSelected = selectedLeagueFilter == league
+                val displayName = league ?: "Ver Tudo"
+                val buttonColor = if (isSelected) NeonCyan else StadiumConcrete
+                val textColor = if (isSelected) Color.Black else Color.White
+                val borderColor = if (isSelected) NeonCyan else StadiumBorder
+                
+                Box(
+                    modifier = Modifier
+                        .background(buttonColor, shape = RoundedCornerShape(8.dp))
+                        .border(1.dp, borderColor, shape = RoundedCornerShape(8.dp))
+                        .clickable { selectedLeagueFilter = league }
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "Progresso Geral",
-                        color = Color.White.copy(alpha = 0.6f),
-                        fontSize = 12.sp
-                    )
-                    Text(
-                        text = "$completionPercent%",
-                        color = NeonEmerald,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = displayName,
+                            color = textColor,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                        if (league == "Brasileirão 2026") {
+                            Box(
+                                modifier = Modifier
+                                    .background(NeonEmerald, shape = RoundedCornerShape(4.dp))
+                                    .padding(horizontal = 4.dp, vertical = 1.dp)
+                            ) {
+                                Text(
+                                    text = "ATIVO",
+                                    color = Color.Black,
+                                    fontSize = 8.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        // Search Field Card
+        // Search Field Card - Compact vertical space
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
@@ -174,7 +290,7 @@ fun CollectionScreen(
             singleLine = true
         )
 
-        // Filters Container Card
+        // Filters Container Card - Collapsible to fully clear area for cards
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -184,65 +300,157 @@ fun CollectionScreen(
         ) {
             Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { isFiltersExpanded = !isFiltersExpanded }
+                        .padding(vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Icon(imageVector = Icons.Default.FilterList, contentDescription = null, tint = NeonEmerald, modifier = Modifier.size(16.dp))
-                    Text("Filtros Rápidos", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                }
-
-                // Horizontal list of Rarities filters
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    // "Todos" chip
-                    FilterChip(
-                        selected = rarityFilter == null,
-                        onClick = { rarityFilter = null },
-                        label = { Text("Tudo", fontSize = 10.sp) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = NeonEmerald,
-                            selectedLabelColor = Color.Black
-                        )
-                    )
-
-                    Rarity.values().forEach { rarity ->
-                        val isSel = rarityFilter == rarity
-                        val rarityColor = when(rarity) {
-                            Rarity.BRONZE -> ColorBronze
-                            Rarity.PRATA -> ColorSilver
-                            Rarity.OURO -> ColorGold
-                            Rarity.ESPECIAL -> ColorEspecial
-                            Rarity.LENDARIA -> ColorLendaria
-                            Rarity.ASSINADA -> ColorAssinada
-                            Rarity.ANIMADA -> ColorAnimada
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(imageVector = Icons.Default.FilterList, contentDescription = null, tint = NeonEmerald, modifier = Modifier.size(16.dp))
+                        Text("Filtros Rápidos", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        
+                        // Show active count badge if filters are collapsed but there are active filters
+                        val activeCount = (if (rarityFilter != null) 1 else 0) +
+                                (if (positionFilter != null) 1 else 0) +
+                                (if (ownedOnly) 1 else 0) +
+                                (if (upadasOnly) 1 else 0) +
+                                (if (stickerOnly) 1 else 0)
+                        if (activeCount > 0 && !isFiltersExpanded) {
+                            Box(
+                                modifier = Modifier
+                                    .background(NeonEmerald, shape = CircleShape)
+                                    .size(18.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = activeCount.toString(),
+                                    color = Color.Black,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
-                        FilterChip(
-                            selected = isSel,
-                            onClick = { rarityFilter = if (isSel) null else rarity },
-                            label = { Text(rarity.name, fontSize = 10.sp, color = if (isSel) Color.Black else rarityColor) },
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = rarityColor,
-                                selectedLabelColor = Color.Black
-                            )
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = if (isFiltersExpanded) "Recolher" else "Expandir",
+                            color = NeonCyan,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Icon(
+                            imageVector = if (isFiltersExpanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                            contentDescription = if (isFiltersExpanded) "Recolher Filtros" else "Expandir Filtros",
+                            tint = NeonCyan,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
 
-                // Stats ownership filter checkbox
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .clickable { ownedOnly = !ownedOnly }
-                        .padding(vertical = 4.dp)
-                ) {
-                    Checkbox(
-                        checked = ownedOnly,
-                        onCheckedChange = { ownedOnly = it },
-                        colors = CheckboxDefaults.colors(checkedColor = NeonEmerald)
-                    )
-                    Text("Mostrar apenas cards que eu possuo", color = Color.White, fontSize = 11.sp)
+                if (isFiltersExpanded) {
+                    // Horizontal list of Rarities filters
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        // "Todos" chip
+                        FilterChip(
+                            selected = rarityFilter == null,
+                            onClick = { rarityFilter = null },
+                            label = { Text("Tudo", fontSize = 10.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = NeonEmerald,
+                                selectedLabelColor = Color.Black
+                            )
+                        )
+
+                        Rarity.values().forEach { rarity ->
+                            val isSel = rarityFilter == rarity
+                            val rarityColor = when(rarity) {
+                                Rarity.BRONZE -> ColorBronze
+                                Rarity.PRATA -> ColorSilver
+                                Rarity.OURO -> ColorGold
+                                Rarity.ESPECIAL -> ColorEspecial
+                                Rarity.LENDARIA -> ColorLendaria
+                                Rarity.ASSINADA -> ColorAssinada
+                                Rarity.ANIMADA -> ColorAnimada
+                            }
+                            FilterChip(
+                                selected = isSel,
+                                onClick = { rarityFilter = if (isSel) null else rarity },
+                                label = { Text(rarity.name, fontSize = 10.sp, color = if (isSel) Color.Black else rarityColor) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = rarityColor,
+                                    selectedLabelColor = Color.Black
+                                )
+                            )
+                        }
+                    }
+
+                    // Stats ownership filter checkbox
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clickable { ownedOnly = !ownedOnly }
+                            .padding(vertical = 4.dp)
+                    ) {
+                        Checkbox(
+                            checked = ownedOnly,
+                            onCheckedChange = { ownedOnly = it },
+                            colors = CheckboxDefaults.colors(checkedColor = NeonEmerald)
+                        )
+                        Text("Mostrar apenas cards que eu possuo", color = Color.White, fontSize = 11.sp)
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Option 2: Upadas Only
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { upadasOnly = !upadasOnly }
+                                .background(if (upadasOnly) NeonEmerald.copy(alpha = 0.1f) else Color.Transparent, shape = RoundedCornerShape(6.dp))
+                                .border(0.5.dp, if (upadasOnly) NeonEmerald else Color.White.copy(alpha = 0.1f), shape = RoundedCornerShape(6.dp))
+                                .padding(end = 8.dp)
+                        ) {
+                            Checkbox(
+                                checked = upadasOnly,
+                                onCheckedChange = { upadasOnly = it },
+                                colors = CheckboxDefaults.colors(checkedColor = NeonEmerald)
+                            )
+                            Text("Evoluídas ⚡", color = if (upadasOnly) NeonEmerald else Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        // Option 2: Sticker Only
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { stickerOnly = !stickerOnly }
+                                .background(if (stickerOnly) NeonCyan.copy(alpha = 0.1f) else Color.Transparent, shape = RoundedCornerShape(6.dp))
+                                .border(0.5.dp, if (stickerOnly) NeonCyan else Color.White.copy(alpha = 0.1f), shape = RoundedCornerShape(6.dp))
+                                .padding(end = 8.dp)
+                        ) {
+                            Checkbox(
+                                checked = stickerOnly,
+                                onCheckedChange = { stickerOnly = it },
+                                colors = CheckboxDefaults.colors(checkedColor = NeonCyan)
+                            )
+                            Text("Adesivos 🎨", color = if (stickerOnly) NeonCyan else Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
             }
         }
@@ -262,7 +470,7 @@ fun CollectionScreen(
             }
         } else {
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(145.dp),
+                columns = GridCells.Adaptive(135.dp),
                 modifier = Modifier
                     .fillMaxSize()
                     .weight(1f)
@@ -286,6 +494,9 @@ fun CollectionScreen(
                         }
                         if (invItem?.customPhotoUrl != null) {
                             c = c.copy(photoUrl = invItem.customPhotoUrl)
+                        }
+                        if (invItem?.customClubAndCountry != null) {
+                            c = c.copy(clubAndCountry = invItem.customClubAndCountry)
                         }
                         if (upgradeLevel > 0) {
                             val boost = upgradeLevel * 3
@@ -318,13 +529,15 @@ fun CollectionScreen(
                             card = boostedCard,
                             quantity = qty,
                             inDeck = inDeck,
+                            upgradeLevel = upgradeLevel,
+                            stickerEmoji = invItem?.stickerEmoji,
                             onClick = { selectedDetailCard = boostedCard }
                         )
                     } else {
-                        // Dark locked silhouetted card placeholder
+                        // Dark locked silhouetted card placeholder with same footprint
                         Box(
                             modifier = Modifier
-                                .width(145.dp)
+                                .width(140.dp)
                                 .height(220.dp)
                                 .background(StadiumGlow.copy(alpha = 0.6f), shape = FutCardShape)
                                 .border(1.dp, Color.White.copy(alpha = 0.1f), shape = FutCardShape)
@@ -359,6 +572,7 @@ fun CollectionScreen(
         val qty = inv?.quantity ?: 0
         val inDeck = inv?.inBattleDeck ?: false
         val upgradeLevel = inv?.upgradeLevel ?: 0
+        val boughtWithMoney = inv?.boughtWithMoney == true
 
         // Check if player is currently in a live match
         val isGenuineLive = liveMatches.any { it.isLive && (card.clubAndCountry.contains(it.homeTeam, ignoreCase = true) || card.clubAndCountry.contains(it.awayTeam, ignoreCase = true)) }
@@ -369,6 +583,8 @@ fun CollectionScreen(
         var isCustomizing by remember(card.id) { mutableStateOf(false) }
         var editedName by remember(card.id, inv?.customName) { mutableStateOf(inv?.customName ?: "") }
         var editedPhotoUrl by remember(card.id, inv?.customPhotoUrl) { mutableStateOf(inv?.customPhotoUrl ?: "") }
+        var editedClubAndCountry by remember(card.id, inv?.customClubAndCountry) { mutableStateOf(inv?.customClubAndCountry ?: "") }
+        var isIAFilling by remember { mutableStateOf(false) }
 
         AlertDialog(
             onDismissRequest = { selectedDetailCard = null },
@@ -418,6 +634,21 @@ fun CollectionScreen(
                         .fillMaxWidth()
                         .verticalScroll(scrollState)
                 ) {
+                    // Option 2: Customized Preview (Realtime render)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        FutCardView(
+                            card = card,
+                            upgradeLevel = upgradeLevel,
+                            stickerEmoji = inv?.stickerEmoji,
+                            inDeck = inDeck
+                        )
+                    }
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -531,7 +762,7 @@ fun CollectionScreen(
                         }
                     }
 
-                    // PERSONALIZAÇÃO DA IDENTIDADE (OPÇÃO 1 - CUSTOM PHOTO & NAME)
+                    // PERSONALIZAÇÃO DA IDENTIDADE
                     if (qty > 0) {
                         Divider(color = Color.White.copy(alpha = 0.12f))
                         
@@ -545,7 +776,7 @@ fun CollectionScreen(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Icon(imageVector = Icons.Default.Star, contentDescription = null, tint = NeonCyan, modifier = Modifier.size(16.dp))
-                                Text("Personalizar Foto e Nome (Opção 1)", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                Text("Personalizar Identidade (Opção 1 & 2)", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                             }
                             Icon(
                                 imageVector = Icons.Default.ChevronRight,
@@ -561,16 +792,63 @@ fun CollectionScreen(
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = "Insira um link de imagem pública da internet (ou use algum de nossos presets incríveis abaixo) para mudar o visual do card!",
+                                    text = "Auto-preencha de forma automática com Inteligência Artificial, ou digite manualmente e selecione fotos customizadas!",
                                     color = Color.White.copy(alpha = 0.6f),
                                     fontSize = 11.sp
                                 )
+
+                                // IA AUTOFILL CALL SECTION
+                                Button(
+                                    onClick = {
+                                        isIAFilling = true
+                                        onAutoFillCardFromIA(card.id, card.name) { success, msg, info ->
+                                            isIAFilling = false
+                                            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                                            if (success && info != null) {
+                                                editedName = info.name
+                                                editedClubAndCountry = info.clubAndCountry
+                                                if (!info.photoUrl.isNullOrBlank()) {
+                                                    editedPhotoUrl = info.photoUrl
+                                                }
+                                            }
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = NeonCyan),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(8.dp),
+                                    enabled = !isIAFilling
+                                ) {
+                                    if (isIAFilling) {
+                                        CircularProgressIndicator(modifier = Modifier.size(16.dp), color = Color.Black, strokeWidth = 2.dp)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text("Consultando Dados de 2026...", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    } else {
+                                        Icon(imageVector = Icons.Default.FlashOn, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("Auto-Preencher com IA (Opção 2)", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    }
+                                }
 
                                 OutlinedTextField(
                                     value = editedName,
                                     onValueChange = { editedName = it },
                                     label = { Text("Nome Personalizado", fontSize = 11.sp) },
                                     placeholder = { Text("Ex: Neymar, Lionel... (ou vazio)", fontSize = 11.sp) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White,
+                                        focusedBorderColor = NeonCyan,
+                                        unfocusedBorderColor = Color.White.copy(alpha = 0.2f)
+                                    ),
+                                    singleLine = true
+                                )
+
+                                OutlinedTextField(
+                                    value = editedClubAndCountry,
+                                    onValueChange = { editedClubAndCountry = it },
+                                    label = { Text("Clube / Seleção", fontSize = 11.sp) },
+                                    placeholder = { Text("Ex: Real Madrid / França (ou vazio)", fontSize = 11.sp) },
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedTextColor = Color.White,
@@ -595,6 +873,70 @@ fun CollectionScreen(
                                     ),
                                     singleLine = true
                                 )
+
+                                // Option 2: Digital Sticker Selection Grid
+                                Text(
+                                    text = "🎨 Escolher Adesivo Digital (Opção 2 - Premium)",
+                                    color = NeonCyan,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.sp
+                                )
+                                
+                                var selectedSticker by remember(card.id, inv?.stickerEmoji) { mutableStateOf(inv?.stickerEmoji) }
+                                
+                                val availableStickers = listOf(
+                                    Pair("X", null),
+                                    Pair("🔥 Fogo", "🔥"),
+                                    Pair("⭐ Star", "⭐"),
+                                    Pair("👑 Coroa", "👑"),
+                                    Pair("⚡ Raio", "⚡"),
+                                    Pair("💎 Diamond", "💎"),
+                                    Pair("🛡️ Escudo", "🛡️"),
+                                    Pair("⚽ Bola", "⚽")
+                                )
+
+                                FlowRow(
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    availableStickers.forEach { (stickerText, emoji) ->
+                                        val isThisSelected = selectedSticker == emoji
+                                        Box(
+                                            modifier = Modifier
+                                                .background(
+                                                    if (isThisSelected) NeonEmerald.copy(alpha = 0.2f) else StadiumGlow,
+                                                    shape = RoundedCornerShape(6.dp)
+                                                )
+                                                .border(
+                                                    width = 1.dp,
+                                                    color = if (isThisSelected) NeonEmerald else Color.White.copy(alpha = 0.15f),
+                                                    shape = RoundedCornerShape(6.dp)
+                                                )
+                                                .clickable {
+                                                    selectedSticker = emoji
+                                                    onUpdateCardSticker(card.id, emoji) { success, msg ->
+                                                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                                .padding(horizontal = 8.dp, vertical = 6.dp)
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                            ) {
+                                                if (emoji != null) {
+                                                    Text(text = emoji, fontSize = 12.sp)
+                                                }
+                                                Text(
+                                                    text = stickerText,
+                                                    color = if (isThisSelected) NeonEmerald else Color.White,
+                                                    fontSize = 9.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
 
                                 // Clickable Presets Row for super high-quality sports silhouettes and generic football aesthetic portraits:
                                 Text(
@@ -645,6 +987,7 @@ fun CollectionScreen(
                                         onClick = {
                                             editedName = ""
                                             editedPhotoUrl = ""
+                                            editedClubAndCountry = ""
                                         },
                                         colors = ButtonDefaults.buttonColors(containerColor = Color.Red.copy(alpha = 0.3f)),
                                         modifier = Modifier.weight(1f),
@@ -655,7 +998,7 @@ fun CollectionScreen(
 
                                     Button(
                                         onClick = {
-                                            onCustomizeCard(card.id, editedName, editedPhotoUrl) { success, msg ->
+                                            onCustomizeCard(card.id, editedName, editedPhotoUrl, editedClubAndCountry) { success, msg ->
                                                 Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                                                 if (success) {
                                                     selectedDetailCard = null
@@ -747,18 +1090,35 @@ fun CollectionScreen(
             },
             confirmButton = {
                 if (qty > 0) {
-                    Button(
-                        colors = ButtonDefaults.buttonColors(containerColor = if (inDeck) Color.Red else NeonEmerald),
-                        onClick = {
-                            onToggleBattleDeck(card.id)
-                            selectedDetailCard = null
+                    if (boughtWithMoney) {
+                        Surface(
+                            color = Color(0xFF6A1BFF).copy(alpha = 0.2f),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF8B5CF6)),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.padding(vertical = 4.dp, horizontal = 12.dp)
+                        ) {
+                            Text(
+                                text = "🔒 Protegido (Compra Real)",
+                                color = Color(0xFFA78BFA),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                            )
                         }
-                    ) {
-                        Text(
-                            text = if (inDeck) "Remover da Batalha" else "Usar na Batalha",
-                            color = if (inDeck) Color.White else Color.Black,
-                            fontWeight = FontWeight.Bold
-                        )
+                    } else {
+                        Button(
+                            colors = ButtonDefaults.buttonColors(containerColor = if (inDeck) Color.Red else NeonEmerald),
+                            onClick = {
+                                onToggleBattleDeck(card.id)
+                                selectedDetailCard = null
+                            }
+                        ) {
+                            Text(
+                                text = if (inDeck) "Remover da Batalha" else "Usar na Batalha",
+                                color = if (inDeck) Color.White else Color.Black,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             },

@@ -4,6 +4,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -16,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
@@ -25,13 +28,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.*
+import androidx.compose.ui.res.painterResource
+import com.example.R
+import com.example.ui.viewmodel.FutViewModel
+import com.example.ui.components.PreLaunchLandingDialog
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun LoginScreen(
+    viewModel: FutViewModel,
     onRegisterSuccess: (name: String, team: String, age: Int, provider: String) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
+    var showPreLaunchDialog by remember { mutableStateOf(false) }
     var ageText by remember { mutableStateOf("") }
     var favoriteTeam by remember { mutableStateOf("Flamengo") }
     var expandedDropdown by remember { mutableStateOf(false) }
@@ -55,23 +64,38 @@ fun LoginScreen(
             .navigationBarsPadding(),
         contentAlignment = Alignment.Center
     ) {
+        val scrollState = rememberScrollState()
         Column(
             modifier = Modifier
                 .fillMaxWidth(0.92f)
-                .padding(16.dp),
+                .verticalScroll(scrollState)
+                .padding(vertical = 24.dp, horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Icon Header
-            Icon(
-                imageVector = Icons.Default.SportsSoccer,
-                contentDescription = "Fut Cards",
-                tint = NeonEmerald,
-                modifier = Modifier.size(72.dp)
-            )
+            // Custom Concept C Brand Logo (Chama / Bafo)
+            Box(
+                modifier = Modifier
+                    .size(96.dp)
+                    .shadow(12.dp, shape = RoundedCornerShape(22.dp))
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(Color(0xFFFF7A3D), Color(0xFFE8431A), Color(0xFF7D1208))
+                        )
+                    )
+                    .testTag("iconC"),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                    contentDescription = "CardClash Logo",
+                    modifier = Modifier.fillMaxSize().padding(10.dp)
+                )
+            }
 
             Text(
-                text = "FUT CARDS",
+                text = "CARDCLASH",
                 color = Color.White,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Black,
@@ -87,7 +111,47 @@ fun LoginScreen(
                 modifier = Modifier.padding(horizontal = 12.dp)
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            // 🏆 Copa 2026 pre-launch waitlist banner
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.5.dp, NeonCyan, shape = RoundedCornerShape(12.dp))
+                    .clickable { showPreLaunchDialog = true }
+                    .testTag("waitlist_banner_card"),
+                colors = CardDefaults.cardColors(containerColor = StadiumConcrete.copy(alpha = 0.9f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Text(text = "🏆", fontSize = 28.sp)
+                    Column {
+                        Text(
+                            text = "CAMPANHA COPA DO MUNDO 2026",
+                            color = NeonCyan,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp
+                        )
+                        Text(
+                            text = "\"Quando a Copa acabar, sua coleção continua.\"",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Text(
+                            text = "Acesse o Bracket Grátis e ganhe o Card especial 'Fundador Origem'! 👀 Clique aqui.",
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 9.sp,
+                            lineHeight = 11.sp
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
 
             // Text Field Inputs
             OutlinedTextField(
@@ -190,9 +254,10 @@ fun LoginScreen(
                 fontWeight = FontWeight.Bold
             )
 
-            Row(
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                maxItemsInEachRow = 2
             ) {
                 Button(
                     onClick = {
@@ -243,6 +308,13 @@ fun LoginScreen(
             ) {
                 Text("Entrar como Visitante Temporário", color = NeonCyan, fontSize = 12.sp)
             }
+        }
+
+        if (showPreLaunchDialog) {
+            PreLaunchLandingDialog(
+                viewModel = viewModel,
+                onDismiss = { showPreLaunchDialog = false }
+            )
         }
     }
 }

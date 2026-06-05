@@ -81,7 +81,11 @@ class FutRepository(private val futDao: FutDao) {
         for (id in starterCardIds) {
             val current = futDao.getInventoryItem(id)
             val newQty = (current?.quantity ?: 0) + 1
-            futDao.insertInventoryItem(UserInventory(cardId = id, quantity = newQty, inBattleDeck = true))
+            if (current != null) {
+                futDao.insertInventoryItem(current.copy(quantity = newQty, inBattleDeck = true))
+            } else {
+                futDao.insertInventoryItem(UserInventory(cardId = id, quantity = newQty, inBattleDeck = true, boughtWithMoney = false))
+            }
         }
     }
 
@@ -133,7 +137,25 @@ class FutRepository(private val futDao: FutDao) {
             // Save to database inventory
             val existing = futDao.getInventoryItem(chosen.id)
             val newQty = (existing?.quantity ?: 0) + 1
-            futDao.insertInventoryItem(UserInventory(cardId = chosen.id, quantity = newQty, inBattleDeck = existing?.inBattleDeck ?: false))
+            val isBoughtWithMoney = (packType == "PREMIUM" || packType == "LENDARIO")
+            if (existing != null) {
+                futDao.insertInventoryItem(
+                    existing.copy(
+                        quantity = newQty,
+                        boughtWithMoney = existing.boughtWithMoney || isBoughtWithMoney,
+                        inBattleDeck = if (isBoughtWithMoney) false else existing.inBattleDeck
+                    )
+                )
+            } else {
+                futDao.insertInventoryItem(
+                    UserInventory(
+                        cardId = chosen.id,
+                        quantity = newQty,
+                        inBattleDeck = false,
+                        boughtWithMoney = isBoughtWithMoney
+                    )
+                )
+            }
         }
 
         return drawnCards
@@ -142,8 +164,32 @@ class FutRepository(private val futDao: FutDao) {
     // Toggle deck status
     suspend fun toggleBattleDeck(cardId: Int) {
         val existing = futDao.getInventoryItem(cardId) ?: return
+        if (existing.boughtWithMoney) return // Cartas compradas com dinheiro real nunca entram no bafo!
         if (existing.quantity > 0) {
             futDao.updateBattleDeckStatus(cardId, !existing.inBattleDeck)
+        }
+    }
+
+    suspend fun addElitePassBonusCard(cardId: Int) {
+        val existing = futDao.getInventoryItem(cardId)
+        val newQty = (existing?.quantity ?: 0) + 1
+        if (existing != null) {
+            futDao.insertInventoryItem(
+                existing.copy(
+                    quantity = newQty,
+                    boughtWithMoney = true,
+                    inBattleDeck = false
+                )
+            )
+        } else {
+            futDao.insertInventoryItem(
+                UserInventory(
+                    cardId = cardId,
+                    quantity = newQty,
+                    boughtWithMoney = true,
+                    inBattleDeck = false
+                )
+            )
         }
     }
 
@@ -162,6 +208,11 @@ class FutRepository(private val futDao: FutDao) {
             return false // User does not own the requested card
         }
 
+        // Rigorous Escrow check: if card is in the active battle deck, must have at least one spare copy to trade
+        if (myCardInv.inBattleDeck && myCardInv.quantity <= 1) {
+            return false // Card active in battle deck is locked in escrow!
+        }
+
         // Deduct my requested card
         val newMyQty = myCardInv.quantity - 1
         if (newMyQty <= 0) {
@@ -173,7 +224,11 @@ class FutRepository(private val futDao: FutDao) {
         // Give me the offered card
         val offerCardInv = futDao.getInventoryItem(offer.offerCardId)
         val newOfferQty = (offerCardInv?.quantity ?: 0) + 1
-        futDao.insertInventoryItem(UserInventory(cardId = offer.offerCardId, quantity = newOfferQty, inBattleDeck = offerCardInv?.inBattleDeck ?: false))
+        if (offerCardInv != null) {
+            futDao.insertInventoryItem(offerCardInv.copy(quantity = newOfferQty))
+        } else {
+            futDao.insertInventoryItem(UserInventory(cardId = offer.offerCardId, quantity = newOfferQty, inBattleDeck = false, boughtWithMoney = false))
+        }
 
         // Update trade status in database
         futDao.updateTradeOfferStatus(offer.id, "ACCEPTED")
@@ -186,6 +241,11 @@ class FutRepository(private val futDao: FutDao) {
         // Verify user currently has this card to post
         val inv = futDao.getInventoryItem(offerCardId)
         if (inv == null || inv.quantity <= 0) return false
+
+        // Rigorous Escrow check: if card is in active battle deck, must have spare copies to post for trades
+        if (inv.inBattleDeck && inv.quantity <= 1) {
+            return false // Card active in battle deck is locked in escrow!
+        }
 
         // Atomically deposit the offer card in escrow (by deducting 1 unit)
         val newQty = inv.quantity - 1
@@ -216,7 +276,11 @@ class FutRepository(private val futDao: FutDao) {
         // Refund offered card to inventory
         val existing = futDao.getInventoryItem(found.offerCardId)
         val newQty = (existing?.quantity ?: 0) + 1
-        futDao.insertInventoryItem(UserInventory(cardId = found.offerCardId, quantity = newQty, inBattleDeck = existing?.inBattleDeck ?: false))
+        if (existing != null) {
+            futDao.insertInventoryItem(existing.copy(quantity = newQty))
+        } else {
+            futDao.insertInventoryItem(UserInventory(cardId = found.offerCardId, quantity = newQty, inBattleDeck = false, boughtWithMoney = false))
+        }
 
         futDao.deleteTradeOffer(offerId)
         return true
@@ -246,7 +310,11 @@ class FutRepository(private val futDao: FutDao) {
             // Give user the opponent's card (won card)
             val oppInvItem = futDao.getInventoryItem(opponentCardId)
             val newQty = (oppInvItem?.quantity ?: 0) + 1
-            futDao.insertInventoryItem(UserInventory(cardId = opponentCardId, quantity = newQty, inBattleDeck = oppInvItem?.inBattleDeck ?: false))
+            if (oppInvItem != null) {
+                futDao.insertInventoryItem(oppInvItem.copy(quantity = newQty))
+            } else {
+                futDao.insertInventoryItem(UserInventory(cardId = opponentCardId, quantity = newQty, inBattleDeck = false, boughtWithMoney = false))
+            }
             addXp(40)
             addCoins(100)
         } else {

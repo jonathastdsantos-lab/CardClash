@@ -39,7 +39,8 @@ data class PlayerCard(
     val rarity: Rarity,
     val initialHexColor: String, // Custom visual tint for the card graphics
     val photoUrl: String? = null,
-    val clubLogoUrl: String? = null
+    val clubLogoUrl: String? = null,
+    val league: String = "Brasileirão 2026"
 )
 
 @Entity(tableName = "user_profile")
@@ -64,7 +65,10 @@ data class UserInventory(
     val inBattleDeck: Boolean = false,
     val upgradeLevel: Int = 0, // Card evolution level (0 to 3)
     val customPhotoUrl: String? = null,
-    val customName: String? = null
+    val customName: String? = null,
+    val customClubAndCountry: String? = null,
+    val boughtWithMoney: Boolean = false,
+    val stickerEmoji: String? = null
 )
 
 @Entity(tableName = "battle_log")

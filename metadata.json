@@ -1,5 +1,5 @@
 {
-  "name": "Fut Cards",
+  "name": "CardClash",
   "description": "Colecione, dispute batalhas de bafo, e crie sua arena de futebol premium com placares ao vivo!",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

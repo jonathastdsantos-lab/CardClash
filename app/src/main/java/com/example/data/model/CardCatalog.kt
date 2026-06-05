@@ -12,7 +12,8 @@ object CardCatalog {
             stats = PlayerStats(pac = 97, sho = 99, pas = 95, dri = 98, def = 60, phy = 88),
             rarity = Rarity.LENDARIA,
             initialHexColor = "#FFD700", // Bright Gold
-            photoUrl = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80"
+            photoUrl = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
+            league = "Copa do Mundo"
         ),
         PlayerCard(
             id = 2,
@@ -23,7 +24,8 @@ object CardCatalog {
             stats = PlayerStats(pac = 92, sho = 89, pas = 94, dri = 97, def = 35, phy = 79),
             rarity = Rarity.ASSINADA,
             initialHexColor = "#DA70D6", // Orchid Purple
-            photoUrl = "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80"
+            photoUrl = "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80",
+            league = "Champions 25"
         ),
         PlayerCard(
             id = 3,
@@ -34,7 +36,8 @@ object CardCatalog {
             stats = PlayerStats(pac = 98, sho = 88, pas = 85, dri = 94, def = 42, phy = 80),
             rarity = Rarity.ANIMADA,
             initialHexColor = "#00FFFF", // Neon Electric Blue
-            photoUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80"
+            photoUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+            league = "La Liga"
         ),
         PlayerCard(
             id = 4,
@@ -45,7 +48,8 @@ object CardCatalog {
             stats = PlayerStats(pac = 86, sho = 89, pas = 90, dri = 93, def = 38, phy = 65),
             rarity = Rarity.ASSINADA,
             initialHexColor = "#E6E6FA", // Lavender Metallic
-            photoUrl = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80"
+            photoUrl = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80",
+            league = "Champions 25"
         ),
         PlayerCard(
             id = 5,
@@ -56,7 +60,8 @@ object CardCatalog {
             stats = PlayerStats(pac = 91, sho = 88, pas = 89, dri = 91, def = 45, phy = 78),
             rarity = Rarity.LENDARIA,
             initialHexColor = "#FFD700",
-            photoUrl = "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80"
+            photoUrl = "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80",
+            league = "Champions 25"
         ),
 
         // === ESPECIAL (Event / Promo) ===
@@ -68,7 +73,8 @@ object CardCatalog {
             overall = 86,
             stats = PlayerStats(pac = 92, sho = 82, pas = 80, dri = 89, def = 30, phy = 60),
             rarity = Rarity.ESPECIAL,
-            initialHexColor = "#FF4500" // Coral Fire
+            initialHexColor = "#FF4500", // Coral Fire
+            league = "Brasileirão 2026"
         ),
         PlayerCard(
             id = 7,
@@ -78,7 +84,8 @@ object CardCatalog {
             overall = 85,
             stats = PlayerStats(pac = 89, sho = 85, pas = 75, dri = 84, def = 38, phy = 83),
             rarity = Rarity.ESPECIAL,
-            initialHexColor = "#FF4500"
+            initialHexColor = "#FF4500",
+            league = "La Liga"
         ),
         PlayerCard(
             id = 8,
@@ -88,7 +95,8 @@ object CardCatalog {
             overall = 83,
             stats = PlayerStats(pac = 78, sho = 86, pas = 78, dri = 81, def = 42, phy = 92),
             rarity = Rarity.ESPECIAL,
-            initialHexColor = "#32CD32" // Lime Green
+            initialHexColor = "#32CD32", // Lime Green
+            league = "Brasileirão 2026"
         ),
 
         // === OURO ===
@@ -100,7 +108,8 @@ object CardCatalog {
             overall = 89,
             stats = PlayerStats(pac = 86, sho = 85, pas = 85, dri = 89, def = 47, phy = 90),
             rarity = Rarity.OURO,
-            initialHexColor = "#D4AF37" // Dark Goldenrod
+            initialHexColor = "#D4AF37", // Dark Goldenrod
+            league = "Premier League"
         ),
         PlayerCard(
             id = 10,
@@ -110,7 +119,8 @@ object CardCatalog {
             overall = 87,
             stats = PlayerStats(pac = 89, sho = 82, pas = 82, dri = 88, def = 43, phy = 64),
             rarity = Rarity.OURO,
-            initialHexColor = "#D4AF37"
+            initialHexColor = "#D4AF37",
+            league = "La Liga"
         ),
         PlayerCard(
             id = 11,
@@ -120,7 +130,8 @@ object CardCatalog {
             overall = 87,
             stats = PlayerStats(pac = 79, sho = 53, pas = 75, dri = 74, def = 89, phy = 80),
             rarity = Rarity.OURO,
-            initialHexColor = "#D4AF37"
+            initialHexColor = "#D4AF37",
+            league = "Champions 25"
         ),
         PlayerCard(
             id = 12,
@@ -130,7 +141,8 @@ object CardCatalog {
             overall = 86,
             stats = PlayerStats(pac = 91, sho = 81, pas = 81, dri = 86, def = 50, phy = 73),
             rarity = Rarity.OURO,
-            initialHexColor = "#D4AF37"
+            initialHexColor = "#D4AF37",
+            league = "La Liga"
         ),
 
         // === PRATA ===
@@ -142,7 +154,8 @@ object CardCatalog {
             overall = 80,
             stats = PlayerStats(pac = 72, sho = 82, pas = 64, dri = 70, def = 45, phy = 85),
             rarity = Rarity.PRATA,
-            initialHexColor = "#C0C0C0" // Silver
+            initialHexColor = "#C0C0C0", // Silver
+            league = "Brasileirão 2026"
         ),
         PlayerCard(
             id = 14,
@@ -152,7 +165,8 @@ object CardCatalog {
             overall = 81,
             stats = PlayerStats(pac = 85, sho = 78, pas = 75, dri = 83, def = 48, phy = 70),
             rarity = Rarity.PRATA,
-            initialHexColor = "#C0C0C0"
+            initialHexColor = "#C0C0C0",
+            league = "Brasileirão 2026"
         ),
         PlayerCard(
             id = 15,
@@ -162,7 +176,8 @@ object CardCatalog {
             overall = 82,
             stats = PlayerStats(pac = 74, sho = 82, pas = 81, dri = 79, def = 50, phy = 72),
             rarity = Rarity.PRATA,
-            initialHexColor = "#C0C0C0"
+            initialHexColor = "#C0C0C0",
+            league = "Brasileirão 2026"
         ),
         PlayerCard(
             id = 16,
@@ -172,7 +187,8 @@ object CardCatalog {
             overall = 76,
             stats = PlayerStats(pac = 48, sho = 73, pas = 85, dri = 78, def = 44, phy = 65),
             rarity = Rarity.PRATA,
-            initialHexColor = "#C0C0C0"
+            initialHexColor = "#C0C0C0",
+            league = "Brasileirão 2026"
         ),
         PlayerCard(
             id = 17,
@@ -182,7 +198,8 @@ object CardCatalog {
             overall = 78,
             stats = PlayerStats(pac = 62, sho = 79, pas = 82, dri = 80, def = 35, phy = 68),
             rarity = Rarity.PRATA,
-            initialHexColor = "#C0C0C0"
+            initialHexColor = "#C0C0C0",
+            league = "Brasileirão 2026"
         ),
 
         // === BRONZE ===
@@ -194,7 +211,8 @@ object CardCatalog {
             overall = 75,
             stats = PlayerStats(pac = 65, sho = 79, pas = 60, dri = 68, def = 30, phy = 72),
             rarity = Rarity.BRONZE,
-            initialHexColor = "#CD7F32" // Bronze
+            initialHexColor = "#CD7F32", // Bronze
+            league = "Brasileirão 2026"
         ),
         PlayerCard(
             id = 19,
@@ -204,7 +222,8 @@ object CardCatalog {
             overall = 74,
             stats = PlayerStats(pac = 81, sho = 73, pas = 63, dri = 72, def = 31, phy = 75),
             rarity = Rarity.BRONZE,
-            initialHexColor = "#CD7F32"
+            initialHexColor = "#CD7F32",
+            league = "Brasileirão 2026"
         ),
         PlayerCard(
             id = 20,
@@ -214,7 +233,8 @@ object CardCatalog {
             overall = 73,
             stats = PlayerStats(pac = 68, sho = 74, pas = 58, dri = 67, def = 28, phy = 73),
             rarity = Rarity.BRONZE,
-            initialHexColor = "#CD7F32"
+            initialHexColor = "#CD7F32",
+            league = "Brasileirão 2026"
         ),
         PlayerCard(
             id = 21,
@@ -224,7 +244,8 @@ object CardCatalog {
             overall = 72,
             stats = PlayerStats(pac = 74, sho = 71, pas = 60, dri = 69, def = 25, phy = 70),
             rarity = Rarity.BRONZE,
-            initialHexColor = "#CD7F32"
+            initialHexColor = "#CD7F32",
+            league = "Brasileirão 2026"
         ),
         PlayerCard(
             id = 22,
@@ -234,7 +255,102 @@ object CardCatalog {
             overall = 75,
             stats = PlayerStats(pac = 72, sho = 72, pas = 77, dri = 76, def = 40, phy = 66),
             rarity = Rarity.BRONZE,
-            initialHexColor = "#CD7F32"
+            initialHexColor = "#CD7F32",
+            league = "Brasileirão 2026"
+        ),
+
+        // === NOVAS LENDAS INTERNACIONAIS & CAMPEONATOS (ADICIONADOS) ===
+        PlayerCard(
+            id = 23,
+            name = "Lionel Messi",
+            clubAndCountry = "Inter Miami / Argentina",
+            position = Position.ATA,
+            overall = 94,
+            stats = PlayerStats(pac = 82, sho = 91, pas = 92, dri = 94, def = 33, phy = 65),
+            rarity = Rarity.ASSINADA,
+            initialHexColor = "#FF69B4", // Hot Pink
+            photoUrl = "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
+            league = "MLS"
+        ),
+        PlayerCard(
+            id = 24,
+            name = "Cristiano Ronaldo",
+            clubAndCountry = "Al-Nassr / Portugal",
+            position = Position.ATA,
+            overall = 91,
+            stats = PlayerStats(pac = 80, sho = 92, pas = 81, dri = 84, def = 35, phy = 80),
+            rarity = Rarity.ASSINADA,
+            initialHexColor = "#FFA500", // Gold/Orange Tint
+            photoUrl = "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80",
+            league = "Copa do Mundo"
+        ),
+        PlayerCard(
+            id = 25,
+            name = "Kylian Mbappé",
+            clubAndCountry = "R. Madrid / França",
+            position = Position.ATA,
+            overall = 93,
+            stats = PlayerStats(pac = 97, sho = 90, pas = 80, dri = 92, def = 36, phy = 78),
+            rarity = Rarity.ANIMADA,
+            initialHexColor = "#00BFFF", // Deep Sky Blue
+            photoUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+            league = "La Liga"
+        ),
+        PlayerCard(
+            id = 26,
+            name = "Erling Haaland",
+            clubAndCountry = "Man City / Noruega",
+            position = Position.ATA,
+            overall = 91,
+            stats = PlayerStats(pac = 89, sho = 92, pas = 66, dri = 80, def = 45, phy = 88),
+            rarity = Rarity.OURO,
+            initialHexColor = "#D4AF37",
+            league = "Premier League"
+        ),
+        PlayerCard(
+            id = 27,
+            name = "Kevin De Bruyne",
+            clubAndCountry = "Man City / Bélgica",
+            position = Position.MEI,
+            overall = 90,
+            stats = PlayerStats(pac = 68, sho = 84, pas = 94, dri = 87, def = 65, phy = 78),
+            rarity = Rarity.ESPECIAL,
+            initialHexColor = "#87CEEB", // Sky Blue
+            league = "Premier League"
+        ),
+        PlayerCard(
+            id = 28,
+            name = "Jude Bellingham",
+            clubAndCountry = "R. Madrid / Inglaterra",
+            position = Position.MEI,
+            overall = 90,
+            stats = PlayerStats(pac = 80, sho = 83, pas = 83, dri = 88, def = 78, phy = 82),
+            rarity = Rarity.OURO,
+            initialHexColor = "#D4AF37",
+            league = "La Liga"
+        ),
+        PlayerCard(
+            id = 29,
+            name = "Mohamed Salah",
+            clubAndCountry = "Liverpool / Egito",
+            position = Position.ATA,
+            overall = 89,
+            stats = PlayerStats(pac = 90, sho = 87, pas = 82, dri = 88, def = 46, phy = 75),
+            rarity = Rarity.ESPECIAL,
+            initialHexColor = "#FF4500",
+            league = "Premier League"
+        ),
+        PlayerCard(
+            id = 30,
+            name = "Fundador 'Origem'",
+            clubAndCountry = "CardClash / Exclusiva",
+            position = Position.MEI,
+            overall = 95,
+            stats = PlayerStats(pac = 96, sho = 94, pas = 97, dri = 95, def = 70, phy = 86),
+            rarity = Rarity.ANIMADA,
+            initialHexColor = "#FF00FF", // Bright Fuchsia / Neon Pink
+            photoUrl = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+            league = "Copa do Mundo"
         )
     )
 

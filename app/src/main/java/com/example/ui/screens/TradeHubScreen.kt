@@ -48,7 +48,9 @@ fun TradeHubScreen(
     }
 
     val ownedCardsForOffer = remember(inventory) {
-        inventory.filter { it.quantity > 0 }.mapNotNull {
+        inventory.filter { 
+            it.quantity > 0 && !(it.inBattleDeck && it.quantity <= 1)
+        }.mapNotNull {
             CardCatalog.getCardById(it.cardId)
         }
     }

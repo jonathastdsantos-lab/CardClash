@@ -42,13 +42,13 @@ import coil.compose.AsyncImage
 val FutCardShape = GenericShape { size, _ ->
     val w = size.width
     val h = size.height
-    moveTo(w * 0.15f, 0f)
-    lineTo(w * 0.85f, 0f)
-    lineTo(w, h * 0.15f)
-    lineTo(w, h * 0.75f)
+    moveTo(w * 0.06f, 0f)
+    lineTo(w * 0.94f, 0f)
+    lineTo(w, h * 0.04f)
+    lineTo(w, h * 0.88f)
     lineTo(w * 0.5f, h)
-    lineTo(0f, h * 0.75f)
-    lineTo(0f, h * 0.15f)
+    lineTo(0f, h * 0.88f)
+    lineTo(0f, h * 0.04f)
     close()
 }
 
@@ -58,8 +58,14 @@ fun FutCardView(
     modifier: Modifier = Modifier,
     quantity: Int? = null,
     inDeck: Boolean = false,
+    upgradeLevel: Int = 0,
+    stickerEmoji: String? = null,
     onClick: (() -> Unit)? = null
 ) {
+    val bgPath = remember { Path() }
+    val torsoPath = remember { Path() }
+    val collarPath = remember { Path() }
+
     // Holographic & Animated colors cycle
     val infiniteTransition = rememberInfiniteTransition(label = "hologram")
     val animatedProgress by infiniteTransition.animateFloat(
@@ -120,13 +126,13 @@ fun FutCardView(
     }
 
     val finalModifier = modifier
-        .width(155.dp)
-        .height(235.dp)
+        .width(140.dp)
+        .height(220.dp)
         .shadow(12.dp, shape = FutCardShape)
         .clip(FutCardShape)
         .background(darkAccent)
         .border(
-            width = if (card.rarity >= Rarity.ESPECIAL) 3.dp else 2.dp,
+            width = if (card.rarity >= Rarity.ESPECIAL) 2.5.dp else 1.8.dp,
             brush = if (card.rarity >= Rarity.ASSINADA) holographicBrush else SolidColor(primaryColor),
             shape = FutCardShape
         )
@@ -136,17 +142,17 @@ fun FutCardView(
     Box(modifier = finalModifier) {
         // Futuristic background lines drawn onto card
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val path = Path().apply {
-                moveTo(size.width * 0.15f, 0f)
-                lineTo(size.width * 0.85f, 0f)
-                lineTo(size.width, size.height * 0.15f)
-                lineTo(size.width, size.height * 0.75f)
-                lineTo(size.width * 0.5f, size.height)
-                lineTo(0f, size.height * 0.75f)
-                lineTo(0f, size.height * 0.15f)
-                close()
-            }
-            clipPath(path) {
+            bgPath.reset()
+            bgPath.moveTo(size.width * 0.06f, 0f)
+            bgPath.lineTo(size.width * 0.94f, 0f)
+            bgPath.lineTo(size.width, size.height * 0.04f)
+            bgPath.lineTo(size.width, size.height * 0.88f)
+            bgPath.lineTo(size.width * 0.5f, size.height)
+            bgPath.lineTo(0f, size.height * 0.88f)
+            bgPath.lineTo(0f, size.height * 0.04f)
+            bgPath.close()
+
+            clipPath(bgPath) {
                 // Background radial glow based on the specific rarity theme
                 val bgGlowColor = when (card.rarity) {
                     Rarity.BRONZE -> Color(0xFF422E1F)
@@ -206,7 +212,7 @@ fun FutCardView(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(10.dp),
+                .padding(7.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Top Bar: Rating, Position, Rarity Pill & Brazilian Flag
@@ -226,16 +232,16 @@ fun FutCardView(
                     Text(
                         text = card.overall.toString(),
                         color = primaryColor,
-                        fontSize = 24.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Black,
-                        modifier = Modifier.offset(y = (-2).dp)
+                        modifier = Modifier.offset(y = (-1).dp)
                     )
                     Text(
                         text = card.position.name,
                         color = Color(0xFFCFD8E6),
-                        fontSize = 11.sp,
+                        fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.offset(y = (-6).dp)
+                        modifier = Modifier.offset(y = (-4).dp)
                     )
                 }
 
@@ -277,11 +283,11 @@ fun FutCardView(
                 }
             }
 
-            // Photo/Silhouette Container (height = 84dp)
+            // Photo/Silhouette Container (height = 70dp)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(84.dp),
+                    .height(70.dp),
                 contentAlignment = Alignment.BottomCenter
             ) {
                 // Custom Player Silhouette Canvas
@@ -306,20 +312,19 @@ fun FutCardView(
                     )
 
                     // Torso path (scaled to canvas size)
-                    val torsoPath = Path().apply {
-                        moveTo(w * 0.25f, h)
-                        cubicTo(
-                            w * 0.27f, h * 0.55f,
-                            w * 0.40f, h * 0.42f,
-                            w * 0.50f, h * 0.42f
-                        )
-                        cubicTo(
-                            w * 0.60f, h * 0.42f,
-                            w * 0.73f, h * 0.55f,
-                            w * 0.75f, h
-                        )
-                        close()
-                    }
+                    torsoPath.reset()
+                    torsoPath.moveTo(w * 0.25f, h)
+                    torsoPath.cubicTo(
+                        w * 0.27f, h * 0.55f,
+                        w * 0.40f, h * 0.42f,
+                        w * 0.50f, h * 0.42f
+                    )
+                    torsoPath.cubicTo(
+                        w * 0.60f, h * 0.42f,
+                        w * 0.73f, h * 0.55f,
+                        w * 0.75f, h
+                    )
+                    torsoPath.close()
 
                     drawPath(
                         path = torsoPath,
@@ -327,15 +332,14 @@ fun FutCardView(
                     )
 
                     // Collar detail
-                    val collarPath = Path().apply {
-                        moveTo(w * 0.42f, h * 0.48f)
-                        lineTo(w * 0.50f, h * 0.68f)
-                        lineTo(w * 0.58f, h * 0.48f)
-                        lineTo(w * 0.55f, h * 0.44f)
-                        lineTo(w * 0.50f, h * 0.50f)
-                        lineTo(w * 0.45f, h * 0.44f)
-                        close()
-                     }
+                    collarPath.reset()
+                    collarPath.moveTo(w * 0.42f, h * 0.48f)
+                    collarPath.lineTo(w * 0.50f, h * 0.68f)
+                    collarPath.lineTo(w * 0.58f, h * 0.48f)
+                    collarPath.lineTo(w * 0.55f, h * 0.44f)
+                    collarPath.lineTo(w * 0.50f, h * 0.50f)
+                    collarPath.lineTo(w * 0.45f, h * 0.44f)
+                    collarPath.close()
 
                     drawPath(
                         path = collarPath,
@@ -349,10 +353,10 @@ fun FutCardView(
                         model = card.photoUrl,
                         contentDescription = "Foto de ${card.name}",
                         modifier = Modifier
-                            .size(64.dp)
-                            .offset(y = (-4).dp)
+                            .size(54.dp)
+                            .offset(y = (-2).dp)
                             .clip(CircleShape)
-                            .border(1.5.dp, primaryColor.copy(alpha = 0.85f), CircleShape)
+                            .border(1.2.dp, primaryColor.copy(alpha = 0.85f), CircleShape)
                             .background(Color.Transparent)
                     )
                 }
@@ -362,21 +366,21 @@ fun FutCardView(
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .offset(x = 10.dp, y = 4.dp)
-                        .size(24.dp)
+                        .offset(x = 8.dp, y = 3.dp)
+                        .size(20.dp)
                         .background(
                             brush = Brush.linearGradient(
                                 colors = listOf(Color(0xFF26324D), Color(0xFF141A28))
                             ),
-                            shape = RoundedCornerShape(6.dp)
+                            shape = RoundedCornerShape(5.dp)
                         )
-                        .border(0.5.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(6.dp)),
+                        .border(0.5.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(5.dp)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = firstLetter,
                         color = primaryColor,
-                        fontSize = 11.sp,
+                        fontSize = 9.sp,
                         fontWeight = FontWeight.Black
                     )
                 }
@@ -387,10 +391,10 @@ fun FutCardView(
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .offset(x = (-6).dp, y = 0.dp)
+                            .offset(x = (-4).dp, y = 0.dp)
                             .background(Color(0xFF080C14).copy(alpha = 0.75f), shape = RoundedCornerShape(999.dp))
                             .border(0.5.dp, Color(0xFFFF5A5A).copy(alpha = 0.6f), shape = RoundedCornerShape(999.dp))
-                            .padding(horizontal = 5.dp, vertical = 2.dp)
+                            .padding(horizontal = 4.dp, vertical = 1.dp)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -413,30 +417,30 @@ fun FutCardView(
                 }
             }
 
-            Spacer(modifier = Modifier.height(2.dp))
+            Spacer(modifier = Modifier.height(1.dp))
 
             // Player Identity
             Text(
                 text = card.name.uppercase(),
                 color = Color.White,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Black,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 4.dp)
+                modifier = Modifier.padding(horizontal = 3.dp)
             )
 
             Text(
                 text = card.clubAndCountry.uppercase(),
                 color = Color(0xFF8B95A7),
-                fontSize = 8.sp,
+                fontSize = 7.5.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                letterSpacing = 1.sp,
+                letterSpacing = 0.8.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 4.dp)
+                modifier = Modifier.padding(horizontal = 3.dp)
             )
 
             // Fading Divider Line
@@ -544,7 +548,8 @@ fun FutCardView(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 6.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -600,6 +605,52 @@ fun FutCardView(
                 )
             }
         }
+
+        // Option 2: Unique Level Badge
+        if (upgradeLevel > 0) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .offset(y = 4.dp)
+                    .background(Brush.horizontalGradient(colors = listOf(Color(0xFFFDB931), Color(0xFF917405))), shape = RoundedCornerShape(4.dp))
+                    .border(0.5.dp, Color.White.copy(alpha = 0.5f), shape = RoundedCornerShape(4.dp))
+                    .padding(horizontal = 6.dp, vertical = 1.5.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(8.dp)
+                    )
+                    Text(
+                        text = "LV $upgradeLevel",
+                        color = Color.White,
+                        fontSize = 7.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
+            }
+        }
+
+        // Option 2: Digital Sticker Patch Overlays
+        if (!stickerEmoji.isNullOrBlank()) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .offset(x = 2.dp, y = (-20).dp)
+                    .size(32.dp)
+                    .background(StadiumConcrete.copy(alpha = 0.95f), shape = CircleShape)
+                    .border(1.2.dp, NeonEmerald, shape = CircleShape)
+                    .padding(4.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = stickerEmoji, fontSize = 16.sp)
+            }
+        }
     }
 }
 
@@ -607,22 +658,171 @@ fun FutCardView(
 fun StatItemRow(value: Int, label: String) {
     Row(
         verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
-        modifier = Modifier.width(36.dp)
+        horizontalArrangement = Arrangement.spacedBy(1.dp),
+        modifier = Modifier.width(32.dp)
     ) {
         Text(
             text = value.toString(),
             color = Color.White,
-            fontSize = 11.sp,
+            fontSize = 10.sp,
             fontWeight = FontWeight.ExtraBold,
-            modifier = Modifier.widthIn(min = 14.dp),
+            modifier = Modifier.widthIn(min = 12.dp),
             textAlign = TextAlign.End
         )
         Text(
             text = label,
             color = Color(0xFF8B95A7),
-            fontSize = 7.sp,
+            fontSize = 6.sp,
             fontWeight = FontWeight.Bold
         )
+    }
+}
+
+@Composable
+fun FutCardBack(
+    modifier: Modifier = Modifier
+) {
+    val bgPath = remember { Path() }
+    val infiniteTransition = rememberInfiniteTransition(label = "back_pulse")
+    val borderGlowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glow"
+    )
+
+    val finalModifier = modifier
+        .width(140.dp)
+        .height(220.dp)
+        .shadow(12.dp, shape = FutCardShape)
+        .clip(FutCardShape)
+        .background(StadiumConcrete)
+        .border(
+            width = 2.dp,
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    NeonEmerald.copy(alpha = borderGlowAlpha),
+                    NeonCyan.copy(alpha = borderGlowAlpha * 0.7f),
+                    StadiumBorder
+                )
+            ),
+            shape = FutCardShape
+        )
+
+    Box(
+        modifier = finalModifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            bgPath.reset()
+            bgPath.moveTo(size.width * 0.06f, 0f)
+            bgPath.lineTo(size.width * 0.94f, 0f)
+            bgPath.lineTo(size.width, size.height * 0.04f)
+            bgPath.lineTo(size.width, size.height * 0.88f)
+            bgPath.lineTo(size.width * 0.5f, size.height)
+            bgPath.lineTo(0f, size.height * 0.88f)
+            bgPath.lineTo(0f, size.height * 0.04f)
+            bgPath.close()
+
+            clipPath(bgPath) {
+                // Background dark radial stadium gradient
+                drawRect(
+                    brush = Brush.radialGradient(
+                        colors = listOf(StadiumGlow, StadiumObsidian),
+                        center = Offset(size.width * 0.5f, size.height * 0.5f),
+                        radius = size.height * 0.7f
+                    )
+                )
+
+                // Diagonal arena layout lines
+                for (i in -3..10) {
+                    val offset = i * 25.dp.toPx()
+                    drawLine(
+                        color = NeonEmerald.copy(alpha = 0.06f),
+                        start = Offset(0f, offset),
+                        end = Offset(size.width, offset + size.width),
+                        strokeWidth = 1.5.dp.toPx()
+                    )
+                    drawLine(
+                        color = NeonEmerald.copy(alpha = 0.06f),
+                        start = Offset(size.width, offset),
+                        end = Offset(0f, offset + size.width),
+                        strokeWidth = 1.5.dp.toPx()
+                    )
+                }
+
+                // Inner frame design
+                drawPath(
+                    path = Path().apply {
+                        val insetW = size.width * 0.08f
+                        val insetH = size.height * 0.08f
+                        moveTo(insetW, insetH)
+                        lineTo(size.width - insetW, insetH)
+                        lineTo(size.width - insetW, size.height - insetH * 1.5f)
+                        lineTo(size.width * 0.5f, size.height - insetH * 0.5f)
+                        lineTo(insetW, size.height - insetH * 1.5f)
+                        close()
+                    },
+                    color = NeonCyan.copy(alpha = 0.15f),
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx())
+                )
+
+                // Center glowing sphere or soccer ball pattern
+                val cx = size.width * 0.5f
+                val cy = size.height * 0.45f
+                val r = size.width * 0.22f
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(NeonEmerald.copy(alpha = 0.25f), Color.Transparent),
+                        center = Offset(cx, cy),
+                        radius = r * 1.5f
+                    ),
+                    radius = r * 1.5f,
+                    center = Offset(cx, cy)
+                )
+
+                drawCircle(
+                    color = NeonEmerald.copy(alpha = 0.3f),
+                    radius = r,
+                    center = Offset(cx, cy),
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5.dp.toPx())
+                )
+            }
+        }
+
+        // Card logo in center
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Verified,
+                contentDescription = null,
+                tint = NeonEmerald,
+                modifier = Modifier.size(28.dp)
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "CARDCLASH",
+                color = Color.White,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 2.sp,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = "COPA '26",
+                color = BrightGold,
+                fontSize = 8.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 1.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 1.dp)
+            )
+        }
     }
 }
