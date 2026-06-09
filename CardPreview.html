@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CardClash — CardPreview Component</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Anton&family=Saira+Condensed:wght@600;700&family=Saira:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-dark: #0a0e14;
+    --card-bg: radial-gradient(120% 80% at 50% 0%, #1c2740 0%, #0c111c 80%);
+    --neon-cyan: #00e5ff;
+    --gold: #ffd86b;
+    --gold-dark: #b8821f;
+    --light-grey: #cfd8e6;
+  }
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    background-color: var(--bg-dark);
+    color: #f4f6fb;
+    font-family: 'Saira', sans-serif;
+    min-height: 100vh;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+  }
+
+  header {
+    text-align: center;
+    max-width: 600px;
+  }
+
+  header h1 {
+    font-family: 'Anton';
+    font-size: 32px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: linear-gradient(180deg, #fff, #9fb0cf);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 8px;
+  }
+
+  header p {
+    color: #8b95a7;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ================== RESPONSIVE FLEXBOX CONTAINER ================== */
+  .preview-wrapper {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    max-width: 900px;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  /* Left Side: Interactive controls or info */
+  .info-panel {
+    flex: 1 1 350px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 24px;
+    border-radius: 16px;
+    backdrop-filter: blur(12px);
+  }
+
+  .info-panel h2 {
+    font-family: 'Saira Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--neon-cyan);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .info-panel p {
+    font-size: 13px;
+    color: #a0aec0;
+    line-height: 1.6;
+  }
+
+  /* Feature list using flexbox rows */
+  .feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: #cfd8e6;
+  }
+
+  .feature-item svg {
+    flex-shrink: 0;
+    color: var(--gold);
+  }
+
+  /* Code output styling */
+  .code-snippet {
+    background: #000;
+    padding: 12px;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 11px;
+    color: #7af0ff;
+    overflow-x: auto;
+    border: 1px solid rgba(0, 229, 255, 0.15);
+  }
+
+  /* ================== FLEXBOX CARD component ================== */
+  .card-container {
+    flex: 0 0 auto;
+    perspective: 1000px;
+  }
+
+  .clash-card {
+    width: 250px;
+    height: 380px;
+    border-radius: 24px;
+    background: var(--card-bg);
+    border: 2px solid var(--neon-cyan);
+    box-shadow: 0 20px 40px rgba(0, 229, 255, 0.15);
+    padding: 14px;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.6s;
+    transform-style: preserve-3d;
+    
+    /* Flexbox vertical layout within the card */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .clash-card:hover {
+    transform: translateY(-8px) rotateX(4deg) rotateY(-8deg);
+    box-shadow: 0 25px 50px rgba(0, 229, 255, 0.3), 0 0 30px rgba(0, 229, 255, 0.15);
+  }
+
+  /* Card Head: Flexbox row */
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .rating-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 0.9;
+  }
+
+  .rating-value {
+    font-family: 'Anton', sans-serif;
+    font-size: 32px;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+  }
+
+  .position {
+    font-family: 'Saira Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    color: var(--light-grey);
+    letter-spacing: 1px;
+  }
+
+  /* Badge Rarity Pill: Flex */
+  .rarity-badge {
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    color: #0c111c;
+    font-family: 'Saira Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    letter-spacing: 0.5px;
+    text-shadow: none;
+    align-self: flex-start;
+  }
+
+  /* Central Illustration Area: Flex center */
+  .illustration-area {
+    height: 140px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    position: relative;
+    margin: 10px 0;
+  }
+
+  .illustration-placeholder {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,229,255,0.15) 30%, transparent 70%);
+    border: 1px dashed rgba(0, 229, 255, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    bottom: 5px;
+  }
+
+  .mascot-vector {
+    width: 110px;
+    height: 110px;
+    z-index: 2;
+    filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+  }
+
+  /* Card Identity info: Flex column */
+  .player-identity {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .player-name {
+    font-family: 'Bungee', sans-serif;
+    font-size: 16px;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    text-transform: uppercase;
+    text-align: center;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .club-info {
+    font-family: 'Saira Condensed', sans-serif;
+    font-size: 11px;
+    color: #a0aec0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .country-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: var(--neon-cyan);
+  }
+
+  /* Stats table/columns: Flex row with columns */
+  .stats-grid {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 10px;
+    margin-top: 5px;
+  }
+
+  /* Individual Attribute element: Flex row with label */
+  .stat-col {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Saira Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+  }
+
+  .stat-val {
+    color: #fff;
+  }
+
+  .stat-lbl {
+    color: #8b95a7;
+    font-weight: 600;
+  }
+
+  /* Hologram spark shine effect overlay */
+  .clash-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 22px;
+    background: linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%);
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>CardPreview Component</h1>
+  <p>Design de figurinha de futebol cartoon responsiva e estilizada usando puro CSS Flexbox. Perfeita para a Listagem de Espera da Copa do Mundo 2026.</p>
+</header>
+
+<div class="preview-wrapper">
+  <!-- Info & Integration Help Panel -->
+  <div class="info-panel">
+    <h2>Estratégia Visual</h2>
+    <p>Criado de acordo com as diretrizes do <strong>CardClash</strong>. Ideal para ser renderizado dinamicamente na lista de espera, promovendo o colecionismo retro-futurístico.</p>
+    
+    <div class="feature-item">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+      <span>Layout 100% Flexbox Responsivo</span>
+    </div>
+    
+    <div class="feature-item">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+      <span>Mockup de Jogador Vector/Mascote</span>
+    </div>
+
+    <div class="feature-item">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+      <span>Efeito Sutil de Inclinação 3D no Hover</span>
+    </div>
+
+    <p style="margin-top: 10px; font-weight: bold; color: white;">Como Integrar na sua Página:</p>
+    <div class="code-snippet">
+&lt;div class="clash-card"&gt;
+  &lt;div class="card-header"&gt;...&lt;/div&gt;
+  &lt;div class="illustration-area"&gt;...&lt;/div&gt;
+  &lt;div class="stats-grid"&gt;...&lt;/div&gt;
+&lt;/div&gt;
+    </div>
+  </div>
+
+  <!-- Real Flexbox Card Component -->
+  <div class="card-container">
+    <div class="clash-card">
+      <!-- HEADER ROW (flexbox spacing) -->
+      <div class="card-header">
+        <div class="rating-area">
+          <span class="rating-value">99</span>
+          <span class="position">ATA</span>
+        </div>
+        <div class="rarity-badge">LENDÁRIA</div>
+      </div>
+
+      <!-- ILLUSTRATION CENTERED (flexbox center alignment) -->
+      <div class="illustration-area">
+        <div class="illustration-placeholder"></div>
+        <!-- Optimized SVG representation of the clash soccer ball mascot -->
+        <svg class="mascot-vector" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="60" cy="60" r="50" fill="none" stroke="#00e5ff" stroke-width="3" />
+          <circle cx="60" cy="60" r="44" fill="#142033" />
+          <!-- Star/Pentagon paths for stylized comic football -->
+          <polygon points="60,40 68,52 82,50 74,62 80,76 66,72 60,84 54,72 40,76 46,62 38,50 52,52" fill="#ffe875" />
+          <circle cx="60" cy="58" r="8" fill="#ff6b3d" />
+          <path d="M 33,35 Q 60,15 87,35" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" />
+        </svg>
+      </div>
+
+      <!-- IDENTITY COLUMNS (flexbox layout) -->
+      <div class="player-identity">
+        <h3 class="player-name">PELÉ</h3>
+        <div class="club-info">
+          <span>SANTOS FC</span>
+          <span class="country-dot"></span>
+          <span>BRASIL</span>
+        </div>
+      </div>
+
+      <!-- STATS GRID (flexbox evenly distributed) -->
+      <div class="stats-grid">
+        <div class="stat-col">
+          <div class="stat-pill"><span class="stat-val">99</span><span class="stat-lbl">PAC</span></div>
+          <div class="stat-pill"><span class="stat-val">96</span><span class="stat-lbl">PAS</span></div>
+        </div>
+        <div class="stat-col">
+          <div class="stat-pill"><span class="stat-val">98</span><span class="stat-lbl">SHO</span></div>
+          <div class="stat-pill"><span class="stat-val">99</span><span class="stat-lbl">DRI</span></div>
+        </div>
+        <div class="stat-col">
+          <div class="stat-pill"><span class="stat-val">60</span><span class="stat-lbl">DEF</span></div>
+          <div class="stat-pill"><span class="stat-val">94</span><span class="stat-lbl">PHY</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
