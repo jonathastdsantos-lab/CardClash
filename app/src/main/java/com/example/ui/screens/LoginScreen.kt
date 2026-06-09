@@ -88,7 +88,7 @@ fun LoginScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                    painter = painterResource(id = R.drawable.img_clashcard_cartoon),
                     contentDescription = "CardClash Logo",
                     modifier = Modifier.fillMaxSize().padding(10.dp)
                 )

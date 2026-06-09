@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
@@ -14,6 +15,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.res.painterResource
+import com.example.R
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -217,6 +220,16 @@ fun PreLaunchLandingDialog(
                                     textAlign = TextAlign.Center,
                                     lineHeight = 26.sp
                                 )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Image(
+                                    painter = painterResource(id = R.drawable.img_clashcard_cartoon),
+                                    contentDescription = "ClashCard Cartoon Premium Illustration",
+                                    modifier = Modifier
+                                        .size(130.dp)
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .border(2.dp, NeonCyan, shape = RoundedCornerShape(16.dp))
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = "Inscreva-se na lista de espera antes de 11/06 para garantir seu Card de Fundador \"Origem\". Palpite no campeão para ganhar pacotes extras!",
                                     color = Color.White.copy(alpha = 0.75f),

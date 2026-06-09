@@ -40,7 +40,23 @@ data class PlayerCard(
     val initialHexColor: String, // Custom visual tint for the card graphics
     val photoUrl: String? = null,
     val clubLogoUrl: String? = null,
-    val league: String = "Brasileirão 2026"
+    val league: String = "Brasileirão 2026",
+    val fullName: String? = null,
+    val birthDate: String? = null,
+    val birthPlace: String? = null,
+    val height: String? = null,
+    val weight: String? = null,
+    val preferredFoot: String? = null,
+    val shirtNumberClub: String? = null,
+    val shirtNumberNational: String? = null,
+    val careerYears: List<String>? = null,
+    val mainTitles: List<String>? = null,
+    val careerGames: Int? = null,
+    val careerGoals: Int? = null,
+    val careerAssists: Int? = null,
+    val copaGroup: String? = null,
+    val nextOpponent: String? = null,
+    val nextMatchDate: String? = null
 )
 
 @Entity(tableName = "user_profile")

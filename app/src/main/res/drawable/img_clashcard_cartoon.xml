@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+
+    <!-- Deep obsidian base gradient with comic neon glow border -->
+    <path
+        android:pathData="M 40,80 L 472,80 A 32,32 0 0 1 504,112 L 504,400 A 32,32 0 0 1 472,432 L 40,432 A 32,32 0 0 1 8,400 L 8,112 A 32,32 0 0 1 40,80 Z"
+        android:strokeColor="#00E5FF"
+        android:strokeWidth="4">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="0.0"
+                android:startY="0.0"
+                android:endX="512.0"
+                android:endY="512.0">
+                <item android:offset="0.0" android:color="#1A0A35" />
+                <item android:offset="1.0" android:color="#0B1230" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Comic style sunburst rays -->
+    <path
+        android:pathData="M256,256 L96,80 L140,80 Z M256,256 L372,80 L416,80 Z M256,256 L504,180 L504,224 Z M256,256 L504,288 L504,332 Z M256,256 L372,432 L416,432 Z M256,256 L96,432 L140,432 Z M256,256 L8,288 L8,332 Z M256,256 L8,180 L8,224 Z"
+        android:fillColor="#15ffffff" />
+
+    <!-- Neon Glow blob under the central card -->
+    <path
+        android:pathData="M 256,256 m -150,0 a 150,150 0 1,0 300,0 a 150,150 0 1,0 -300,0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="256"
+                android:centerY="256"
+                android:gradientRadius="150">
+                <item android:offset="0.0" android:color="#7af0ff" />
+                <item android:offset="1.0" android:color="#00000000" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- CENTRAL COLLECTIBLE CARTOON SOCCER CARD -->
+    <!-- Card Border Frame (3D-like gold/cyan gradient) -->
+    <group
+        android:translateX="256"
+        android:translateY="256"
+        android:rotation="-8">
+
+        <!-- Card Body -->
+        <path
+            android:pathData="M -80,-140 L 80,-140 A 24,24 0 0 1 104,-116 L 104,116 A 24,24 0 0 1 80,140 L -80,140 A 24,24 0 0 1 -104,116 L -104,-116 A 24,24 0 0 1 -80,-140 Z"
+            android:strokeColor="#7af0ff"
+            android:strokeWidth="4">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="0.0"
+                    android:startY="-140.0"
+                    android:endX="0.0"
+                    android:endY="140.0">
+                    <item android:offset="0.0" android:color="#1A2740" />
+                    <item android:offset="1.0" android:color="#0A101C" />
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <!-- Golden Inner Frame -->
+        <path
+            android:pathData="M -72,-130 L 72,-130 A 16,14 0 0 1 88,-116 L 88,116 A 16,16 0 0 1 72,130 L -72,130 A 16,16 0 0 1 -88,116 L -88,-116 A 16,16 0 0 1 -72,-130 Z"
+            android:strokeColor="#ffd86b"
+            android:strokeWidth="2" />
+
+        <!-- Stadium grass pitch representation inside card -->
+        <path
+            android:pathData="M -84,10 L 84,10 L 84,114 A 12,12 0 0 1 72,126 L -72,126 A 12,12 0 0 1 -84,114 Z"
+            android:fillColor="#0D3813" />
+        <path
+            android:pathData="M -84,35 L 84,35 L 84,65 L -84,65 Z"
+            android:fillColor="#154E20" />
+        <path
+            android:pathData="M -84,90 L 84,90 L 84,114 A 12,12 0 0 1 72,126 L -72,126 A 12,12 0 0 1 -84,114 Z"
+            android:fillColor="#154E20" />
+
+        <!-- Goal Post silhouette -->
+        <path
+            android:pathData="M -45,126 L -45,45 L 45,45 L 45,126"
+            android:strokeColor="#50ffffff"
+            android:strokeWidth="1.5" />
+
+        <!-- Stylized 3D Cartoon Soccer Bal / Football in center (glowing white & neon) -->
+        <group android:translateY="-25">
+            <!-- Outer shadow of ball -->
+            <path
+                android:pathData="M 0,0 m -40,0 a 40,40 0 1,0 80,0 a 40,40 0 1,0 -80,0"
+                android:fillColor="#3A0815" />
+
+            <!-- Main Ball Body -->
+            <path
+                android:pathData="M 0,0 m -35,0 a 35,35 0 1,0 70,0 a 35,35 0 1,0 -70,0">
+                <aapt:attr name="android:fillColor">
+                    <gradient
+                        android:type="radial"
+                        android:centerX="-5"
+                        android:centerY="-10"
+                        android:gradientRadius="35">
+                        <item android:offset="0.0" android:color="#FFFFFF" />
+                        <item android:offset="0.75" android:color="#E0E5F0" />
+                        <item android:offset="1.0" android:color="#95A2B5" />
+                    </gradient>
+                </aapt:attr>
+            </path>
+
+            <!-- Football pentagons (Stylized Star/Pentagon pattern in cartoon style) -->
+            <path
+                android:pathData="M 0,-12 L 10,-3 L 6,10 L -6,10 L -10,-3 Z"
+                android:fillColor="#222B45" />
+            <path
+                android:pathData="M 0,-35 L 6,-23 L -6,-23 Z"
+                android:fillColor="#222B45" />
+            <path
+                android:pathData="M 28,-18 L 19,-14 L 21,-25 Z"
+                android:fillColor="#222B45" />
+            <path
+                android:pathData="M -28,-18 L -19,-14 L -21,-25 Z"
+                android:fillColor="#222B45" />
+            <path
+                android:pathData="M 32,15 L 21,8 L 22,20 Z"
+                android:fillColor="#222B45" />
+            <path
+                android:pathData="M -32,15 L -21,8 L -22,20 Z"
+                android:fillColor="#222B45" />
+
+            <!-- Highlight glow reflection -->
+            <path
+                android:pathData="M -15,-20 A 18,18 0 0 1 10,-20 A 25,25 0 0 0 -15,-20"
+                android:fillColor="#90FFFFFF" />
+        </group>
+
+        <!-- Bold neon lightning bolt crossing diagonally -->
+        <path
+            android:pathData="M 12,-155 L -35,-55 L -8,-55 L -45,45 L 8,-25 L -10,-25 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="-35.0"
+                    android:startY="-155.0"
+                    android:endX="8.0"
+                    android:endY="45.0">
+                    <item android:offset="0.0" android:color="#FFE875" />
+                    <item android:offset="0.5" android:color="#FFD86B" />
+                    <item android:offset="1.0" android:color="#FF6B3D" />
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <!-- Card Title Badge ("CLASH" text styled in curves) -->
+        <path
+            android:pathData="M -50,-102 L 50,-102 A 8,8 0 0 1 58,-94 L 58,-82 A 8,8 0 0 1 50,-74 L -50,-74 A 8,8 0 0 1 -58,-82 L -58,-94 A 8,8 0 0 1 -50,-102 Z"
+            android:fillColor="#7D1208"
+            android:strokeColor="#ffd86b"
+            android:strokeWidth="1.5" />
+
+        <path
+            android:pathData="M -30,-93 L -24,-83 Q -22,-83 -20,-85 L -26,-95 M -15,-93 L -11,-93 L -11,-83 L -15,-83 M -4,-93 L 0,-83 L 4,-93 M 11,-93 Q 16,-93 16,-88 M 21,-93 L 26,-83"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="2.5"
+            android:strokeLineCap="round" />
+
+        <!-- Miniature Stats pills on base representing card values (e.g. 99 overall) -->
+        <group android:translateY="80">
+            <!-- Overall Badge -->
+            <path
+                android:pathData="M -45,-10 L -25,-10 A 6,6 0 0 1 -19,-4 L -19,8 A 6,6 0 0 1 -25,14 L -45,14 A 6,6 0 0 1 -51,8 L -51,-4 A 6,6 0 0 1 -45,-10 Z"
+                android:fillColor="#ff6b3d" />
+            <!-- Inside Overall Text: "99" -->
+            <path
+                android:pathData="M -45,-4 L -41,-4 L -41,8 L -45,8 M -35,-4 L -31,-4 L -31,8 L -35,8"
+                android:strokeColor="#FFFFFF"
+                android:strokeWidth="2"
+                android:strokeLineCap="round" />
+
+            <!-- Category badge (stars) -->
+            <path
+                android:pathData="M 25,-10 L 45,-10 A 6,6 0 0 1 51,-4 L 51,8 A 6,6 0 0 1 45,14 L 25,14 A 6,6 0 0 1 19,8 L 19,-4 A 6,6 0 0 1 25,-10 Z"
+                android:fillColor="#7af0ff" />
+        </group>
+    </group>
+
+    <!-- Additional Foreground Sparkle highlights -->
+    <!-- Sparkle 1 -->
+    <path
+        android:pathData="M 120,130 L 126,145 L 140,148 L 126,151 L 120,166 L 114,151 L 100,148 L 114,145 Z"
+        android:fillColor="#ffd86b" />
+    <!-- Sparkle 2 -->
+    <path
+        android:pathData="M 380,350 L 384,360 L 396,362 L 384,364 L 380,374 L 376,364 L 364,362 L 376,360 Z"
+        android:fillColor="#7af0ff" />
+</vector>

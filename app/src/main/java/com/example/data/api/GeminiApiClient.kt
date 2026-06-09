@@ -127,7 +127,7 @@ object GeminiApiClient {
         val prompt = """
             Você é um assistente de dados esportivos especialista em futebol e estatísticas da FIFA.
             Dado o jogador '$playerName', identifique as seguintes informações ATUALIZADAS e REAIS de 2026:
-            1. Nome atualizado e oficial curto do jogador (ex: "Cristiano Ronaldo", "Neymar Jr", "Lionel Messi", "K. Mbappé").
+            1. Nome atualizado e oficial curto do jogador - adicione um emoji icônico sobre o jogador ou sua nacionalidade no final do nome (ex: "Cristiano Ronaldo 🇵🇹", "Neymar Jr ⚡", "Lionel Messi 🇦🇷", "K. Mbappé 🇫🇷").
             2. Equipe/Clube atual no formato 'Clube / Seleção' (ex: "Al-Nassr / Portugal", "Inter Miami / Argentina", "Al-Hilal / Brasil", "Real Madrid / França").
             3. Selecione uma URL de imagem de preset ou uma imagem pública esportiva do Unsplash para o jogador. Retorne um dos links abaixo que melhor se adapte ou use uma imagem Unsplash similar:
                - https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150 (Golden Portrait)

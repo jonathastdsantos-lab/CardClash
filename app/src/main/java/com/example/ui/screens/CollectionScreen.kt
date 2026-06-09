@@ -2,6 +2,7 @@ package com.example.ui.screens
 
 import android.widget.Toast
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -585,6 +586,128 @@ fun CollectionScreen(
         var editedPhotoUrl by remember(card.id, inv?.customPhotoUrl) { mutableStateOf(inv?.customPhotoUrl ?: "") }
         var editedClubAndCountry by remember(card.id, inv?.customClubAndCountry) { mutableStateOf(inv?.customClubAndCountry ?: "") }
         var isIAFilling by remember { mutableStateOf(false) }
+        var viewCopaMode by remember(card.id) { mutableStateOf(card.league.contains("Copa", ignoreCase = true)) }
+
+        // State variables for generating the cartoon mascot prompt based on the USER'S "PROMPT MESTRE"
+        val cartoonActions = remember {
+            listOf(
+                "Correndo com a bola",
+                "Chutando ao gol",
+                "Comemorando gol",
+                "Fazendo embaixadinhas",
+                "Dominando a bola",
+                "Cabeceando",
+                "Driblando adversário",
+                "Dando carrinho",
+                "Fazendo passe",
+                "Batendo falta",
+                "Levantando troféu",
+                "Posando como craque",
+                "Fazendo sinal de vitória",
+                "Pulando após marcar gol",
+                "Segurando bola sob o braço"
+            )
+        }
+        val cartoonEnquadramentos = remember {
+            listOf(
+                "Corpo inteiro",
+                "Meio corpo",
+                "Close cinematográfico",
+                "Perspectiva baixa heroica",
+                "Perspectiva aérea",
+                "Câmera lateral",
+                "Câmera frontal",
+                "Ação congelada em movimento"
+            )
+        }
+        val cartoonCenarios = remember {
+            listOf(
+                "Estádio lotado",
+                "Campo iluminado à noite",
+                "Fundo transparente",
+                "Fundo esportivo abstrato",
+                "Arena moderna",
+                "Cenário de campeonato",
+                "Efeito neon esportivo",
+                "Fundo de colecionável esportivo"
+            )
+        }
+
+        val tomPeleList = remember {
+            listOf(
+                "pele clara",
+                "pele clara bronzeada",
+                "pele média",
+                "pele morena",
+                "pele negra clara",
+                "pele negra"
+            )
+        }
+        val cabeloList = remember {
+            listOf(
+                "cabelo curto preto",
+                "cabelo curto castanho com fade",
+                "cabelo cacheado curto",
+                "dreads médios",
+                "cabelo longo amarrado",
+                "cabelo loiro curto",
+                "careca",
+                "moicano",
+                "cabelo raspado lateral",
+                "cabelo encaracolado castanho"
+            )
+        }
+        val barbaList = remember {
+            listOf(
+                "sem barba",
+                "barba rala",
+                "cavanhaque",
+                "barba curta",
+                "barba cheia"
+            )
+        }
+        val fisicoList = remember {
+            listOf(
+                "magro atlético",
+                "forte musculoso",
+                "alto e esguio",
+                "compacto e forte"
+            )
+        }
+        val idadeList = remember {
+            listOf(
+                "jovem (18-22 anos)",
+                "adulto (23-28 anos)",
+                "experiente (29-35 anos)"
+            )
+        }
+        val uniformeList = remember {
+            listOf(
+                "camisa amarela com detalhes verdes, shorts azul, meiões brancos",
+                "camisa vermelha listrada, shorts preto, meiões pretos",
+                "camisa azul-claro com listras brancas, shorts branco, meiões azuis",
+                "camisa branca com detalhes dourados, shorts branco, meiões dourados",
+                "camisa preta com detalhes cinza, shorts preto, meiões pretos"
+            )
+        }
+
+        val defaultPeleIndex = card.id % tomPeleList.size
+        val defaultCabeloIndex = (card.id * 3) % cabeloList.size
+        val defaultBarbaIndex = (card.id * 7) % barbaList.size
+        val defaultFisicoIndex = (card.id * 11) % fisicoList.size
+        val defaultIdadeIndex = (card.id * 13) % idadeList.size
+        val defaultUniformeIndex = (card.id * 17) % uniformeList.size
+
+        var selectedPeleIndex by remember(card.id) { mutableStateOf(defaultPeleIndex) }
+        var selectedCabeloIndex by remember(card.id) { mutableStateOf(defaultCabeloIndex) }
+        var selectedBarbaIndex by remember(card.id) { mutableStateOf(defaultBarbaIndex) }
+        var selectedFisicoIndex by remember(card.id) { mutableStateOf(defaultFisicoIndex) }
+        var selectedIdadeIndex by remember(card.id) { mutableStateOf(defaultIdadeIndex) }
+        var selectedUniformeIndex by remember(card.id) { mutableStateOf(defaultUniformeIndex) }
+
+        var selectedActionIndex by remember(card.id) { mutableStateOf((0 until 15).random()) }
+        var selectedFramingIndex by remember(card.id) { mutableStateOf((0 until 8).random()) }
+        var selectedScenarioIndex by remember(card.id) { mutableStateOf((0 until 8).random()) }
 
         AlertDialog(
             onDismissRequest = { selectedDetailCard = null },
@@ -635,17 +758,66 @@ fun CollectionScreen(
                         .verticalScroll(scrollState)
                 ) {
                     // Option 2: Customized Preview (Realtime render)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        contentAlignment = Alignment.Center
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        FutCardView(
-                            card = card,
-                            upgradeLevel = upgradeLevel,
-                            stickerEmoji = inv?.stickerEmoji,
-                            inDeck = inDeck
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            FutCardView(
+                                card = card,
+                                upgradeLevel = upgradeLevel,
+                                stickerEmoji = inv?.stickerEmoji,
+                                isCopaEdition = viewCopaMode,
+                                inDeck = inDeck
+                            )
+                        }
+
+                        // Premium layout toggles for Standard vs World Cup variant
+                        Row(
+                            modifier = Modifier
+                                .background(StadiumGlow, shape = RoundedCornerShape(8.dp))
+                                .padding(4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Button(
+                                onClick = { viewCopaMode = false },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (!viewCopaMode) NeonCyan else Color.Transparent,
+                                    contentColor = if (!viewCopaMode) Color.Black else Color.White
+                                ),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                modifier = Modifier.height(32.dp)
+                            ) {
+                                Text("Padrão Clubes", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                            Button(
+                                onClick = { viewCopaMode = true },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (viewCopaMode) NeonEmerald else Color.Transparent,
+                                    contentColor = if (viewCopaMode) Color.Black else Color.White
+                                ),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                shape = RoundedCornerShape(6.dp),
+                                modifier = Modifier.height(32.dp)
+                            ) {
+                                Text("Edição Copa '26 🏆", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        Text(
+                            text = "↺ Toque no Card para girar em 3D e ver o verso completo!",
+                            color = NeonCyan.copy(alpha = 0.7f),
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(bottom = 4.dp)
                         )
                     }
 
@@ -1016,6 +1188,175 @@ fun CollectionScreen(
                         }
                     }
 
+                    // MESTRE CARTOON PROMPT GENERATOR SECTION
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = StadiumGlow),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, NeonCyan.copy(alpha = 0.3f)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Text("✨", fontSize = 12.sp)
+                                    Text(
+                                        text = "Mestre Prompt Cartoon (IA Seguro)",
+                                        color = NeonCyan,
+                                        fontWeight = FontWeight.Black,
+                                        fontSize = 11.sp
+                                    )
+                                }
+                                
+                                // RE-ROLL ALL BUTTON
+                                Box(
+                                    modifier = Modifier
+                                        .background(NeonCyan.copy(alpha = 0.15f), shape = RoundedCornerShape(4.dp))
+                                        .clickable {
+                                            selectedActionIndex = (0 until cartoonActions.size).random()
+                                            selectedFramingIndex = (0 until cartoonEnquadramentos.size).random()
+                                            selectedScenarioIndex = (0 until cartoonCenarios.size).random()
+                                            selectedPeleIndex = (0 until tomPeleList.size).random()
+                                            selectedCabeloIndex = (0 until cabeloList.size).random()
+                                            selectedBarbaIndex = (0 until barbaList.size).random()
+                                            selectedFisicoIndex = (0 until fisicoList.size).random()
+                                            selectedIdadeIndex = (0 until idadeList.size).random()
+                                            selectedUniformeIndex = (0 until uniformeList.size).random()
+                                        }
+                                        .padding(horizontal = 6.dp, vertical = 3.dp)
+                                ) {
+                                    Text(
+                                        text = "🔄 Tudo Aleatório",
+                                        color = NeonCyan,
+                                        fontSize = 8.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            val currentAction = cartoonActions.getOrElse(selectedActionIndex) { "Chutando ao gol" }
+                            val currentFraming = cartoonEnquadramentos.getOrElse(selectedFramingIndex) { "Corpo inteiro" }
+                            val currentScenario = cartoonCenarios.getOrElse(selectedScenarioIndex) { "Estádio lotado" }
+                            val currentPele = tomPeleList.getOrElse(selectedPeleIndex) { "pele clara bronzeada" }
+                            val currentCabelo = cabeloList.getOrElse(selectedCabeloIndex) { "cabelo curto castanho com fade" }
+                            val currentBarba = barbaList.getOrElse(selectedBarbaIndex) { "sem barba" }
+                            val currentFisico = fisicoList.getOrElse(selectedFisicoIndex) { "magro atlético" }
+                            val currentIdade = idadeList.getOrElse(selectedIdadeIndex) { "jovem (18-22 anos)" }
+                            val currentUniforme = uniformeList.getOrElse(selectedUniformeIndex) { "camisa amarela com detalhes verdes" }
+
+                            val physicalAttributesText = "$currentPele, $currentCabelo, $currentBarba, $currentFisico, $currentIdade, $currentUniforme"
+
+                            // EXCLUSIVE SECURE FORMATTED PROMPT (No players name, 100% legal compliance!)
+                            val fullMestrePrompt = """
+Crie uma ilustração exclusiva de um jogador de futebol cartoon 3D premium com os seguintes atributos físicos: $physicalAttributesText.
+
+O personagem é fictício, sem semelhança a qualquer pessoa real.
+Mantenha o mesmo estilo visual entre todas as gerações.
+
+IMPORTANTE: Cada imagem deve ser ÚNICA e DIFERENTE das anteriores.
+
+Ação: $currentAction
+Enquadramento: $currentFraming
+Cenário: $currentScenario
+
+Estilo:
+- Cartoon 3D ultra premium
+- Qualidade Pixar
+- Mascote esportivo profissional
+- Texturas realistas
+- Iluminação cinematográfica
+- Sombras suaves
+- Reflexos detalhados
+- Ultra HD
+- 8K
+- Renderização profissional
+- Perfeito para figurinhas, stickers, cards colecionáveis.
+
+Não repetir poses já utilizadas anteriormente.
+Cada geração deve parecer uma arte inédita e exclusiva.
+                            """.trimIndent().trim()
+
+                            // PARAMETER CUSTOMIZERS
+                            Text(
+                                text = "Ajustar Atributos do Personagem (Sem Direitos Autorais):",
+                                color = Color.White.copy(alpha = 0.5f),
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                AttributeSelectorRow("Ação", cartoonActions, selectedActionIndex) { selectedActionIndex = it }
+                                AttributeSelectorRow("Enquadr.", cartoonEnquadramentos, selectedFramingIndex) { selectedFramingIndex = it }
+                                AttributeSelectorRow("Cenário", cartoonCenarios, selectedScenarioIndex) { selectedScenarioIndex = it }
+                                AttributeSelectorRow("Pele", tomPeleList, selectedPeleIndex) { selectedPeleIndex = it }
+                                AttributeSelectorRow("Cabelo", cabeloList, selectedCabeloIndex) { selectedCabeloIndex = it }
+                                AttributeSelectorRow("Barba", barbaList, selectedBarbaIndex) { selectedBarbaIndex = it }
+                                AttributeSelectorRow("Físico", fisicoList, selectedFisicoIndex) { selectedFisicoIndex = it }
+                                AttributeSelectorRow("Idade", idadeList, selectedIdadeIndex) { selectedIdadeIndex = it }
+                                AttributeSelectorRow("Uniforme", uniformeList, selectedUniformeIndex) { selectedUniformeIndex = it }
+                            }
+
+                            Spacer(modifier = Modifier.height(2.dp))
+
+                            // RENDER OF RAW SECURE PROMPT INSIDE AN EASY SCROLLABLE CONTAINER
+                            val clipboardManager = androidx.compose.ui.platform.LocalClipboardManager.current
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(100.dp)
+                                    .background(Color.Black.copy(alpha = 0.4f), shape = RoundedCornerShape(4.dp))
+                                    .border(0.5.dp, Color.White.copy(alpha = 0.1f), shape = RoundedCornerShape(4.dp))
+                                    .padding(8.dp)
+                            ) {
+                                val promptScrollState = rememberScrollState()
+                                Text(
+                                    text = fullMestrePrompt,
+                                    color = Color.White.copy(alpha = 0.8f),
+                                    fontSize = 9.sp,
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .verticalScroll(promptScrollState)
+                                )
+                            }
+
+                            // COPY BUTTON
+                            Button(
+                                onClick = {
+                                    clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(fullMestrePrompt))
+                                    Toast.makeText(context, "Mestre Prompt seguro copiado! Cole no seu gerador (Midjourney, Imagen, etc).", Toast.LENGTH_SHORT).show()
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = NeonCyan.copy(alpha = 0.2f), contentColor = NeonCyan),
+                                shape = RoundedCornerShape(4.dp),
+                                modifier = Modifier.fillMaxWidth().height(32.dp),
+                                contentPadding = PaddingValues(0.dp)
+                            ) {
+                                Text("📋 Copiar Mestre Prompt Cartoon Seguro", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            }
+
+                            // JURIDICAL SAFETY DISCLAIMER NOTE
+                            Text(
+                                text = "💡 Personagens representam arquétipos fictícios gerados por inteligência artificial para resguardar a exclusividade e evitar violações de imagem de atletas reais. O rótulo e estatísticas do card dão o contexto final.",
+                                color = Color.White.copy(alpha = 0.45f),
+                                fontSize = 8.sp,
+                                lineHeight = 11.sp,
+                                style = androidx.compose.ui.text.TextStyle(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic),
+                                modifier = Modifier.padding(horizontal = 2.dp)
+                            )
+                        }
+                    }
+
                     // RECENT 5-MATCH FORM TIMELINE (Clickable pills)
                     Divider(color = Color.White.copy(alpha = 0.12f))
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -1154,3 +1495,58 @@ fun CollectionScreen(
         )
     }
 }
+
+@Composable
+private fun AttributeSelectorRow(
+    label: String,
+    list: List<String>,
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Text(
+            text = label,
+            color = Color.White.copy(alpha = 0.6f),
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.width(62.dp)
+        )
+        val rowScrollState = rememberScrollState()
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .horizontalScroll(rowScrollState),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            list.forEachIndexed { index, item ->
+                val isSel = selectedIndex == index
+                Box(
+                    modifier = Modifier
+                        .background(
+                            if (isSel) NeonCyan.copy(alpha = 0.2f) else Color.White.copy(alpha = 0.05f),
+                            shape = RoundedCornerShape(4.dp)
+                        )
+                        .border(
+                            0.5.dp,
+                            if (isSel) NeonCyan else Color.Transparent,
+                            shape = RoundedCornerShape(4.dp)
+                        )
+                        .clickable { onSelect(index) }
+                        .padding(horizontal = 6.dp, vertical = 3.dp)
+                ) {
+                    Text(
+                        text = item,
+                        color = if (isSel) NeonCyan else Color.White.copy(alpha = 0.8f),
+                        fontSize = 8.sp,
+                        fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+            }
+        }
+    }
+}
+

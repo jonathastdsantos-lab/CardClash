@@ -1,3 +1,5 @@
+import java.security.KeyStore
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.kotlin.compose)
@@ -15,12 +17,9 @@ android {
     minSdk = 24
     targetSdk = 36
     
-    // Dynamic version code allocation to ensure strictly increasing version numbers
-    val buildNumber = System.getenv("BUILD_NUMBER")?.toIntOrNull()
-        ?: System.getenv("VERSION_CODE")?.toIntOrNull()
-        ?: (System.currentTimeMillis() / 60000).toInt()
-    versionCode = buildNumber
-    versionName = "1.3.$buildNumber"
+    // Static version configuration to support predictable static parsers on publishing platforms
+    versionCode = 100
+    versionName = "1.4.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -29,10 +28,43 @@ android {
     create("release") {
       val keystoreExists = file("${rootDir}/my-upload-key.jks").exists()
       val keystorePath = System.getenv("KEYSTORE_PATH") ?: if (keystoreExists) "${rootDir}/my-upload-key.jks" else "${rootDir}/debug.keystore"
-      storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD") ?: if (keystoreExists) "" else "android"
-      keyAlias = System.getenv("KEY_ALIAS") ?: if (keystoreExists) "upload" else "androiddebugkey"
-      keyPassword = System.getenv("KEY_PASSWORD") ?: if (keystoreExists) "" else "android"
+      val resolvedStoreFile = file(keystorePath)
+      storeFile = resolvedStoreFile
+      
+      val resolvedStorePassword = System.getenv("STORE_PASSWORD") ?: if (keystoreExists) "" else "android"
+      storePassword = resolvedStorePassword
+      
+      var resolvedKeyAlias = System.getenv("KEY_ALIAS")
+      if (resolvedKeyAlias.isNullOrEmpty()) {
+          if (resolvedStoreFile.exists()) {
+              val keystoreTypes = listOf("JKS", "PKCS12", KeyStore.getDefaultType())
+              var loadedAlias: String? = null
+              for (type in keystoreTypes) {
+                  try {
+                      val ks = KeyStore.getInstance(type)
+                      resolvedStoreFile.inputStream().use { stream ->
+                          ks.load(stream, resolvedStorePassword.toCharArray())
+                          val aliases = ks.aliases()
+                          if (aliases.hasMoreElements()) {
+                              loadedAlias = aliases.nextElement()
+                          }
+                      }
+                      if (loadedAlias != null) break
+                  } catch (e: Exception) {
+                      // Try next keystore type
+                  }
+              }
+              if (loadedAlias != null) {
+                  resolvedKeyAlias = loadedAlias
+              }
+          }
+      }
+      if (resolvedKeyAlias.isNullOrEmpty()) {
+          resolvedKeyAlias = if (keystoreExists) "upload" else "androiddebugkey"
+      }
+      
+      keyAlias = resolvedKeyAlias
+      keyPassword = System.getenv("KEY_PASSWORD") ?: resolvedStorePassword
     }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")

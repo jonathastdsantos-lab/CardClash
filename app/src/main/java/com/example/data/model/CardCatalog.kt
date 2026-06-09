@@ -13,7 +13,31 @@ object CardCatalog {
             rarity = Rarity.LENDARIA,
             initialHexColor = "#FFD700", // Bright Gold
             photoUrl = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
-            league = "Copa do Mundo"
+            league = "Copa do Mundo",
+            fullName = "EDSON ARANTES DO NASCIMENTO (PELÉ)",
+            birthDate = "23/10/1940 (Falecido)",
+            birthPlace = "Três Corações, MG",
+            height = "1.73 m",
+            weight = "73 kg",
+            preferredFoot = "Direito",
+            shirtNumberClub = "10",
+            shirtNumberNational = "10",
+            careerYears = listOf(
+                "1956-1974: Santos FC",
+                "1975-1977: NY Cosmos",
+                "1957-1971: Seleção de Ouro"
+            ),
+            mainTitles = listOf(
+                "★ x3: Copas do Mundo FIFA",
+                "★ x2: Taça Libertadores",
+                "★ x6: Campeonato Brasileiro"
+            ),
+            careerGames = 1363,
+            careerGoals = 1279,
+            careerAssists = 362,
+            copaGroup = "GRUPO HISTÓRICO",
+            nextOpponent = "Lenda Eterna 👑",
+            nextMatchDate = "Imortal"
         ),
         PlayerCard(
             id = 2,
@@ -37,7 +61,31 @@ object CardCatalog {
             rarity = Rarity.ANIMADA,
             initialHexColor = "#00FFFF", // Neon Electric Blue
             photoUrl = "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
-            league = "La Liga"
+            league = "La Liga",
+            fullName = "VINICIUS JOSÉ PAIXÃO DE OLIVEIRA JÚNIOR",
+            birthDate = "12/07/2000 (25 anos)",
+            birthPlace = "São Gonçalo, RJ",
+            height = "1.76 m",
+            weight = "73 kg",
+            preferredFoot = "Direito",
+            shirtNumberClub = "7",
+            shirtNumberNational = "7",
+            careerYears = listOf(
+                "2017-2018: Flamengo",
+                "2018-HOJE: Real Madrid",
+                "2019-HOJE: Brasil (Sel.)"
+            ),
+            mainTitles = listOf(
+                "★ x3: Liga dos Campeões",
+                "★ x3: La Liga Espanhola",
+                "★ x1: Copa América"
+            ),
+            careerGames = 354,
+            careerGoals = 112,
+            careerAssists = 82,
+            copaGroup = "GRUPO B",
+            nextOpponent = "vs MARROCOS · 11/06",
+            nextMatchDate = "11 Junho 2026"
         ),
         PlayerCard(
             id = 4,

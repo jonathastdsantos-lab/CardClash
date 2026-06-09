@@ -25,20 +25,45 @@
 -keep interface com.example.** { *; }
 -keep enum com.example.** { *; }
 
+# Keep important attributes required for reflection and serialization (Retrofit / Moshi)
+-keepattributes Signature, InnerClasses, EnclosingMethod, Deprecated, SourceFile, LineNumberTable
+-keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations, RuntimeVisibleTypeAnnotations, AnnotationDefault
+
 # Prevent Room from being stripped or obfuscated
 -keep class androidx.room.** { *; }
 -dontwarn androidx.room.**
+-keep class * extends androidx.room.RoomDatabase
+-keep @androidx.room.Database class *
+-keep @androidx.room.Dao interface *
+-keep @androidx.room.Entity class *
 
 # Prevent Moshi Kotlin and companion codegen from reflection issues
 -keep class com.squareup.moshi.** { *; }
 -keep interface com.squareup.moshi.** { *; }
 -dontwarn com.squareup.moshi.**
+-keepclassmembers class * {
+    @com.squareup.moshi.Json *;
+}
+-keep @com.squareup.moshi.JsonClass class * { *; }
 
 # Prevent Retrofit details from being stripped
 -keep class retrofit2.** { *; }
 -dontwarn retrofit2.**
+-keepclasseswithmembers class * {
+    @retrofit2.http.* <methods>;
+}
 
 # Prevent OkHttp details from being stripped
 -keep class okhttp3.** { *; }
 -dontwarn okhttp3.**
+
+# Kotlin Coroutines Keep Rules
+-keep class kotlinx.coroutines.** { *; }
+-dontwarn kotlinx.coroutines.**
+-keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
+-keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
+
+# Coil Image Loader Keep Rules
+-keep class coil.** { *; }
+-dontwarn coil.**
 
