@@ -1,0 +1,237 @@
+# Passo a Passo — Hospedar Política de Privacidade no GitHub Pages
+
+> Tempo total: ~15 minutos. Gratuito, sem cartão, URL profissional.
+
+---
+
+## O que você vai ter no final
+
+Uma URL pública tipo `https://[seuusuario].github.io/futcards-privacy/` com a política de privacidade carregando bonitinha. Essa URL você cola na Play Console.
+
+---
+
+## CAMINHO A — Pela interface web (recomendado, sem terminal)
+
+### Passo 1 — Criar conta no GitHub (se ainda não tem)
+
+1. Acesse https://github.com
+2. Clique em **Sign up**
+3. Use seu e-mail, crie uma senha, escolha um username (vai aparecer na URL — escolha algo profissional, ex.: `futcards` ou `seunome-dev`)
+4. Confirme o e-mail
+
+> Esse username vai virar parte da URL pública. Escolha algo decente.
+
+### Passo 2 — Criar o repositório
+
+1. Logado no GitHub, clique no **+** no canto superior direito → **New repository**
+2. **Repository name:** `futcards-privacy` (esse vai aparecer na URL)
+3. **Description:** "Política de Privacidade do app Fut Cards"
+4. Marque como **Public** (precisa ser público para o GitHub Pages funcionar grátis)
+5. Marque **Add a README file** (vai criar o repositório já com um arquivo)
+6. Clique em **Create repository**
+
+### Passo 3 — Criar o arquivo da política
+
+1. No repositório recém-criado, clique em **Add file** → **Create new file**
+2. No nome do arquivo, digite: `index.html`
+3. Cole o conteúdo HTML pronto abaixo no editor (próxima seção)
+4. Role até o final da página, clique em **Commit changes** (botão verde)
+5. Na janela que abrir, confirme clicando em **Commit changes** novamente
+
+### Passo 4 — Ativar o GitHub Pages
+
+1. No repositório, clique em **Settings** (engrenagem, no topo)
+2. No menu lateral esquerdo, clique em **Pages**
+3. Em **Source**, selecione **Deploy from a branch**
+4. Em **Branch**, escolha **main** e **/ (root)**
+5. Clique em **Save**
+6. Aguarde 1-2 minutos. Recarregue a página.
+7. Aparece em cima: `Your site is live at https://[seuusuario].github.io/futcards-privacy/`
+
+✅ **Essa é a URL que você cola na Play Console.**
+
+### Passo 5 — Testar
+
+Abre a URL no navegador. Se a página da política aparece bonitinha, deu certo.
+
+Se aparecer erro 404, espera mais 2-3 minutos (o deploy às vezes demora) e tenta de novo.
+
+---
+
+## HTML pronto para colar no `index.html`
+
+Copia tudo abaixo. Ajusta os campos `[entre colchetes]` antes de salvar.
+
+```html
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Política de Privacidade — Fut Cards</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    background:#0a0e14;color:#cfd8e6;line-height:1.7;padding:40px 20px;
+  }
+  .wrap{max-width:780px;margin:0 auto;background:#141a28;padding:48px 40px;border-radius:16px;border:1px solid #1f2940}
+  h1{font-size:32px;color:#fff;margin-bottom:8px}
+  h2{font-size:20px;color:#ffd86b;margin:32px 0 12px;padding-top:8px}
+  p,li{margin-bottom:12px;color:#cfd8e6}
+  ul{margin-left:24px;margin-bottom:16px}
+  .meta{color:#8b95a7;font-size:14px;margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid #1f2940}
+  a{color:#7af0ff}
+  .footer{margin-top:48px;padding-top:24px;border-top:1px solid #1f2940;color:#8b95a7;font-size:14px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Política de Privacidade</h1>
+  <p class="meta"><strong>Fut Cards</strong> · Última atualização: [DATA]</p>
+
+  <p>A presente Política de Privacidade descreve como o aplicativo Fut Cards (doravante "App"), operado por [SEU NOME OU EMPRESA], CNPJ/CPF [NÚMERO], coleta, usa e protege as informações dos usuários.</p>
+
+  <h2>1. Informações que coletamos</h2>
+  <p><strong>a) Informações fornecidas pelo usuário:</strong></p>
+  <ul>
+    <li>Nome e e-mail obtidos via login com Google, Facebook ou Apple;</li>
+    <li>Nome de usuário escolhido dentro do App;</li>
+    <li>Data de nascimento (verificação de idade).</li>
+  </ul>
+  <p><strong>b) Informações coletadas automaticamente:</strong></p>
+  <ul>
+    <li>Identificador do dispositivo (Device ID);</li>
+    <li>Modelo, sistema operacional e versão do dispositivo;</li>
+    <li>Dados de uso (telas visitadas, tempo de uso);</li>
+    <li>Endereço IP aproximado (segurança).</li>
+  </ul>
+  <p><strong>c) Conteúdo gerado:</strong></p>
+  <ul>
+    <li>Cartas colecionadas, trocas realizadas, resultados de partidas.</li>
+  </ul>
+
+  <h2>2. Como usamos as informações</h2>
+  <ul>
+    <li>Manter sua conta ativa e personalizada;</li>
+    <li>Permitir trocas e partidas entre usuários;</li>
+    <li>Melhorar a experiência do App;</li>
+    <li>Prevenir fraudes e violações dos termos;</li>
+    <li>Comunicar atualizações importantes;</li>
+    <li>Cumprir obrigações legais.</li>
+  </ul>
+
+  <h2>3. Compartilhamento de dados</h2>
+  <p>Não vendemos seus dados. Compartilhamos apenas:</p>
+  <ul>
+    <li>Com provedores de serviços (autenticação, armazenamento, análise) sob contrato;</li>
+    <li>Quando exigido por ordem judicial ou autoridade competente;</li>
+    <li>Em caso de fusão ou aquisição da empresa, com aviso prévio.</li>
+  </ul>
+
+  <h2>4. Seus direitos (LGPD)</h2>
+  <p>Conforme a Lei 13.709/2018 (LGPD), você pode:</p>
+  <ul>
+    <li>Confirmar a existência de tratamento de dados;</li>
+    <li>Acessar seus dados;</li>
+    <li>Corrigir dados incompletos ou desatualizados;</li>
+    <li>Solicitar a exclusão da sua conta e dados associados;</li>
+    <li>Revogar o consentimento.</li>
+  </ul>
+  <p>Para exercer qualquer direito: <a href="mailto:[SEU E-MAIL]">[SEU E-MAIL]</a></p>
+
+  <h2>5. Segurança</h2>
+  <p>Aplicamos medidas técnicas e organizacionais razoáveis para proteger seus dados, incluindo criptografia em trânsito (HTTPS) e controles de acesso. Nenhum sistema é 100% seguro; comunicamos eventuais incidentes conforme a LGPD.</p>
+
+  <h2>6. Crianças e adolescentes</h2>
+  <p>O App é destinado a usuários a partir de 13 anos. Usuários entre 13 e 17 anos devem ter consentimento dos responsáveis. Não coletamos intencionalmente dados de menores de 13 anos.</p>
+
+  <h2>7. Retenção</h2>
+  <p>Mantemos seus dados enquanto a conta estiver ativa. Após a exclusão, os dados são apagados em até 30 dias, exceto quando a lei exigir retenção maior.</p>
+
+  <h2>8. Alterações nesta política</h2>
+  <p>Podemos atualizar esta Política. Mudanças relevantes serão comunicadas no App com aviso de pelo menos 30 dias.</p>
+
+  <h2>9. Contato</h2>
+  <p>
+    Dúvidas sobre privacidade:<br>
+    <a href="mailto:[SEU E-MAIL]">[SEU E-MAIL]</a><br>
+    [SEU ENDEREÇO OPCIONAL]
+  </p>
+  <p>
+    Encarregado de Proteção de Dados (DPO):<br>
+    [SEU NOME ou NOME DO RESPONSÁVEL]
+  </p>
+
+  <div class="footer">
+    © [ANO] Fut Cards. Todos os direitos reservados.
+  </div>
+</div>
+</body>
+</html>
+```
+
+---
+
+## CAMINHO B — Pelo terminal (se você prefere git)
+
+```bash
+# Cria a pasta local
+mkdir futcards-privacy && cd futcards-privacy
+
+# Cria o arquivo index.html (cola o HTML acima nele)
+nano index.html   # ou code . para abrir no VS Code
+
+# Inicia git, conecta com seu repo
+git init
+git add index.html
+git commit -m "primeira versão da política"
+git branch -M main
+git remote add origin https://github.com/[seuusuario]/futcards-privacy.git
+git push -u origin main
+```
+
+Depois ativa GitHub Pages pelo painel do repositório (Settings → Pages → main branch), conforme Passo 4 acima.
+
+---
+
+## Quando precisar ATUALIZAR a política
+
+GitHub Pages é vivo — toda mudança que você fizer no `index.html` (via interface web ou git push) é refletida na URL em 1-2 minutos. Você não precisa de novo deploy nem nada.
+
+Boa prática quando atualizar:
+1. Trocar a data no topo do documento ("Última atualização")
+2. Avisar usuários no app com 30 dias de antecedência (LGPD exige)
+
+---
+
+## URL de exemplo
+
+Se seu username GitHub for `joaosilva` e o repositório for `futcards-privacy`, a URL final é:
+
+**https://joaosilva.github.io/futcards-privacy/**
+
+(Note a barra no final — algumas configurações de Pages exigem.)
+
+---
+
+## Solução de problemas comuns
+
+**"Página em branco"** → Provavelmente o nome do arquivo não é `index.html`. Esse nome é obrigatório.
+
+**"404 Not Found"** → GitHub Pages às vezes leva 5-10 minutos pra ficar online após ativar. Espera, recarrega.
+
+**"O ícone do cadeado quebrado"** → Acontece raramente. Em Settings → Pages, marque **Enforce HTTPS**.
+
+**"Quero trocar para um domínio próprio"** (ex.: `politica.futcards.com.br`) → Settings → Pages → Custom domain. Mas isso só faz sentido se você comprar o domínio. Por enquanto, a URL do GitHub Pages basta para a Play Console.
+
+---
+
+## Próximo passo
+
+Depois que a URL estiver no ar:
+1. Abre o navegador anônimo, cola a URL, confirma que abre direito.
+2. Volta na Play Console → **Política de Privacidade** → cola a URL → salva.
+3. Marca a tarefa como concluída.
+
+Daí já dá pra atacar a próxima do guia (Detalhes do login).
